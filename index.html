@@ -6,284 +6,358 @@
   <title>Advanced Backlog Killer Tracker</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-   <style>
-        :root {
-            --primary: #D4AF37; /* Gold for royal aesthetic */
-            --secondary: #1C2526; /* Deep charcoal for Batman theme */
-            --accent: #4B0082; /* Regal purple */
-            --background: #121212; /* Dark, moody background */
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --text: #cda935; /* Light, elegant text */
-            --border: rgba(212, 175, 55, 0.3); /* Subtle gold border */
-            --shadow: rgba(0, 0, 0, 0.5);
-        }
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+        --primary: #D4AF37; /* Gold for royal aesthetic */
+        --secondary: #1C2526; /* Deep charcoal for Batman theme */
+        --accent: #4B0082; /* Regal purple */
+        --background: #121212; /* Dark, moody background */
+        --card-bg: rgba(255, 255, 255, 0.05);
+        --text: #cda935; /* Light, elegant text */
+        --border: rgba(212, 175, 55, 0.3); /* Subtle gold border */
+        --shadow: rgba(0, 0, 0, 0.5);
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
 
-        body {
-            font-family: 'Cinzel', serif; /* Vintage, royal font */
-            background: linear-gradient(135deg, var(--background), #1C2526);
-            color: var(--text);
-            min-height: 100vh;
-            padding: 2rem;
-            background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M30 0L0 30l30 30 30-30L30 0zm0 8l22 22-22 22-22-22L30 8z" fill="%23D4AF37" fill-opacity="0.05" fill-rule="evenodd"/%3E%3C/svg%3E');
-            background-size: 60px 60px;
-        }
+    body {
+        font-family: 'Cinzel', serif; /* Vintage, royal font */
+        background: linear-gradient(135deg, var(--background), #1C2526);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 2rem;
+        background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M30 0L0 30l30 30 30-30L30 0zm0 8l22 22-22 22-22-22L30 8z" fill="%23D4AF37" fill-opacity="0.05" fill-rule="evenodd"/%3E%3C/svg%3E');
+        background-size: 60px 60px;
+    }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
 
-        .header {
-            text-align: center;
-            margin-bottom: 2rem;
-            animation: slideDown 0.7s ease;
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 1rem;
-        }
+    .header {
+        text-align: center;
+        margin-bottom: 2rem;
+        animation: slideDown 0.7s ease;
+        border-bottom: 2px solid var(--primary);
+        padding-bottom: 1rem;
+    }
 
-        .header h1 {
-            font-size: 3rem;
-            color: var(--primary);
-            text-shadow: 2px 2px 4px var(--shadow);
-            letter-spacing: 2px;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
+    .header h1 {
+        font-size: 3rem;
+        color: var(--primary);
+        text-shadow: 2px 2px 4px var(--shadow);
+        letter-spacing: 2px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
 
-        .header p {
-            font-family: 'Lora', serif; /* Elegant, vintage font for subtitle */
-            font-style: italic;
-            color: var(--text);
-            font-size: 1.2rem;
-        }
+    .header p {
+        font-family: 'Lora', serif; /* Elegant, vintage font for subtitle */
+        font-style: italic;
+        color: var(--text);
+        font-size: 1.2rem;
+    }
 
+    .grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
         .grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
+            grid-template-columns: 1fr;
         }
+    }
 
-        @media (max-width: 768px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-        }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card-bg);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 8px 40px var(--shadow);
+        border: 1px solid var(--border);
+        animation: fadeIn 0.7s ease;
+    }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--card-bg);
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 8px 40px var(--shadow);
-            border: 1px solid var(--border);
-            animation: fadeIn 0.7s ease;
-        }
+    th, td {
+        padding: 1.2rem;
+        text-align: center;
+        border-bottom: 1px solid var(--border);
+        font-family: 'Lora', serif;
+    }
 
-        th, td {
-            padding: 1.2rem;
-            text-align: center;
-            border-bottom: 1px solid var(--border);
-            font-family: 'Lora', serif;
-        }
+    th {
+        background: var(--secondary);
+        color: var(--primary);
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
 
-        th {
-            background: var(--secondary);
-            color: var(--primary);
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
+    tr:hover {
+        background: rgba(212, 175, 55, 0.1);
+        transition: background 0.3s ease;
+    }
 
-        tr:hover {
-            background: rgba(212, 175, 55, 0.1);
-            transition: background 0.3s ease;
-        }
+    .completed {
+        color: var(--primary);
+        font-weight: bold;
+        text-shadow: 0 0 10px var(--primary);
+        animation: pulse 1.5s infinite;
+    }
 
-        .completed {
-            color: var(--primary);
-            font-weight: bold;
-            text-shadow: 0 0 10px var(--primary);
-            animation: pulse 1.5s infinite;
-        }
+    .progress-container {
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 8px 30px var(--shadow);
+        border: 1px solid var(--border);
+    }
 
-        .progress-container {
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 8px 30px var(--shadow);
-            border: 1px solid var(--border);
-        }
+    .progress-container h2 {
+        font-size: 1.8rem;
+        color: var(--primary);
+        text-align: center;
+        margin-bottom: 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
 
-        .progress-container h2 {
-            font-size: 1.8rem;
-            color: var(--primary);
-            text-align: center;
-            margin-bottom: 1.5rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+    .progress-bar {
+        height: 25px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 25px;
+        overflow: hidden;
+        margin: 1rem 0;
+        position: relative;
+        border: 1px solid var(--border);
+    }
 
-        .progress-bar {
-            height: 25px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 25px;
-            overflow: hidden;
-            margin: 1rem 0;
-            position: relative;
-            border: 1px solid var(--border);
-        }
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+        transition: width 0.5s ease;
+        box-shadow: inset 0 0 10px rgba(212, 175, 55, 0.5);
+    }
 
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            transition: width 0.5s ease;
-            box-shadow: inset 0 0 10px rgba(212, 175, 55, 0.5);
-        }
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
+    .stat-box {
+        background: var(--card-bg);
+        padding: 1.5rem;
+        border-radius: 10px;
+        text-align: center;
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 15px var(--shadow);
+        transition: transform 0.3s ease;
+    }
 
-        .stat-box {
-            background: var(--card-bg);
-            padding: 1.5rem;
-            border-radius: 10px;
-            text-align: center;
-            border: 1px solid var(--border);
-            box-shadow: 0 4px 15px var(--shadow);
-            transition: transform 0.3s ease;
-        }
+    .stat-box:hover {
+        transform: translateY(-5px);
+    }
 
-        .stat-box:hover {
-            transform: translateY(-5px);
-        }
+    .stat-box h4 {
+        font-family: 'Cinzel', serif;
+        color: var(--primary);
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+    }
 
-        .stat-box h4 {
-            font-family: 'Cinzel', serif;
-            color: var(--primary);
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-        }
+    .add-form {
+        margin-top: 2rem;
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 8px 30px var(--shadow);
+        border: 1px solid var(--border);
+    }
 
-        .add-form {
-            margin-top: 2rem;
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 8px 30px var(--shadow);
-            border: 1px solid var(--border);
-        }
+    .add-form h3 {
+        font-family: 'Cinzel', serif;
+        margin-bottom: 1.5rem;
+        font-size: 1.8rem;
+        color: var(--primary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
 
-        .add-form h3 {
-            font-family: 'Cinzel', serif;
-            margin-bottom: 1.5rem;
-            font-size: 1.8rem;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+    .form-group {
+        margin-bottom: 1.2rem;
+    }
 
-        .form-group {
-            margin-bottom: 1.2rem;
-        }
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-family: 'Lora', serif;
+        font-weight: 500;
+        font-size: 1rem;
+        color: var(--text);
+        letter-spacing: 0.5px;
+    }
 
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-family: 'Lora', serif;
-            font-weight: 500;
-            font-size: 1rem;
-            color: var(--text);
-            letter-spacing: 0.5px;
-        }
+    input {
+        width: 100%;
+        padding: 0.85rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 10px;
+        font-size: 1rem;
+        outline: none;
+        transition: border 0.3s ease, background 0.3s ease;
+        font-family: 'Lora', serif;
+    }
 
-        input {
-            width: 100%;
-            padding: 0.85rem;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: 10px;
-            font-size: 1rem;
-            outline: none;
-            transition: border 0.3s ease, background 0.3s ease;
-            font-family: 'Lora', serif;
-        }
+    input:focus {
+        border-color: var(--primary);
+        background: rgba(212, 175, 55, 0.05);
+    }
 
-        input:focus {
-            border-color: var(--primary);
-            background: rgba(212, 175, 55, 0.05);
-        }
+    button {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+        border: none;
+        color: var(--text);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: 'Cinzel', serif;
+        font-size: 1.1rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        box-shadow: 0 4px 15px var(--shadow);
+    }
 
-        button {
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            border: none;
-            color: var(--text);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Cinzel', serif;
-            font-size: 1.1rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            box-shadow: 0 4px 15px var(--shadow);
-        }
+    button:hover {
+        transform: translateY(-3px);
+        background: linear-gradient(90deg, var(--accent), var(--primary));
+        box-shadow: 0 6px 20px var(--shadow);
+    }
+    
+    .delete-btn {
+        background: linear-gradient(90deg, #e74c3c, #c0392b);
+        margin-top: 10px;
+    }
 
-        button:hover {
-            transform: translateY(-3px);
-            background: linear-gradient(90deg, var(--accent), var(--primary));
-            box-shadow: 0 6px 20px var(--shadow);
-        }
+    @keyframes slideDown {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
 
-        @keyframes slideDown {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.03); }
+        100% { transform: scale(1); }
+    }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.03); }
-            100% { transform: scale(1); }
-        }
+    .confetti {
+        position: fixed;
+        width: 12px;
+        height: 12px;
+        background: var(--primary);
+        top: 0;
+        opacity: 0;
+        z-index: 9999;
+    }
 
-        .confetti {
-            position: fixed;
-            width: 12px;
-            height: 12px;
-            background: var(--primary);
-            top: 0;
-            opacity: 0;
-            z-index: 9999;
-        }
-
-        @keyframes confetti-fall {
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-        }
-    </style>
+    @keyframes confetti-fall {
+        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(5px);
+    }
+    
+    .modal-content {
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: 15px;
+        max-width: 500px;
+        width: 90%;
+        border: 2px solid var(--primary);
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+        text-align: center;
+    }
+    
+    .modal h2 {
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+        font-size: 2rem;
+    }
+    
+    .modal p {
+        margin-bottom: 1.5rem;
+        font-family: 'Lora', serif;
+        line-height: 1.6;
+    }
+    
+    #initialLectureInput {
+        width: 100%;
+        padding: 12px;
+        font-size: 1.2rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .modal-btn {
+        display: inline-block;
+        width: auto;
+        padding: 0.8rem 2rem;
+        margin: 0 0.5rem;
+        font-size: 1rem;
+    }
+    
+    .hidden {
+        display: none;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
+  <div class="modal" id="initialModal">
+    <div class="modal-content">
+      <h2>🦇 Enter Your Initial Backlog</h2>
+      <p>Welcome, Dark Knight! Begin your journey by entering the total number of lectures in your backlog.</p>
+      <input type="number" id="initialLectureInput" min="1" placeholder="Enter lecture count" autofocus>
+      <div>
+        <button class="modal-btn" onclick="saveInitialLectures()">Begin Tracking</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" id="mainContent">
     <div class="header">
       <h1>🦇 The Dark Knight's Backlog Tracker</h1>
       <p>Master your tasks with the vigilance of Gotham's protector</p>
@@ -320,6 +394,7 @@
             <input type="number" id="newAdded" placeholder="Enter number" min="0" value="0" />
           </div>
           <button onclick="addEntry()">Add Progress</button>
+          <button class="delete-btn" onclick="deleteAllData()">Delete All Data</button>
         </div>
       </div>
 
@@ -339,11 +414,11 @@
           </div>
           <div class="stat-box">
             <h4>Initial Backlog</h4>
-            <p id="initialBacklog">64</p>
+            <p id="initialBacklog">0</p>
           </div>
           <div class="stat-box">
             <h4>Current Backlog</h4>
-            <p id="currentBacklog">64</p>
+            <p id="currentBacklog">0</p>
           </div>
         </div>
       </div>
@@ -368,6 +443,50 @@
     const dataRef = database.ref("backlogData");
 
     let backlogData = [];
+    let initialBacklog = 0;
+
+    // Check if initial lectures are set
+    function checkInitialLectures() {
+      const savedInitial = localStorage.getItem('initialLectures');
+      if (savedInitial) {
+        initialBacklog = parseInt(savedInitial);
+        document.getElementById('initialModal').classList.add('hidden');
+        document.getElementById('mainContent').classList.remove('hidden');
+        loadData();
+      } else {
+        document.getElementById('initialModal').classList.remove('hidden');
+        document.getElementById('mainContent').classList.add('hidden');
+      }
+    }
+
+    // Save initial lectures to localStorage
+    function saveInitialLectures() {
+      const input = document.getElementById('initialLectureInput');
+      const count = parseInt(input.value);
+      
+      if (isNaN(count) || count <= 0) {
+        alert('Please enter a valid number of lectures');
+        return;
+      }
+      
+      localStorage.setItem('initialLectures', count);
+      initialBacklog = count;
+      document.getElementById('initialModal').classList.add('hidden');
+      document.getElementById('mainContent').classList.remove('hidden');
+      
+      // Initialize data with start point
+      backlogData = [{
+        day: "Start",
+        totalBacklog: initialBacklog,
+        lecturesDone: null,
+        newAdded: null,
+        netLeft: initialBacklog
+      }];
+      
+      // Save to Firebase
+      dataRef.set(backlogData);
+      renderTable();
+    }
 
     function renderTable() {
       const tbody = document.getElementById("tableBody");
@@ -377,9 +496,9 @@
       let totalNew = 0;
 
       backlogData.forEach((entry, index) => {
-        const row = document.createElement("tr");
-        const progress = (1 - entry.netLeft / backlogData[0].totalBacklog) * 100;
+        const progress = (1 - entry.netLeft / initialBacklog) * 100;
 
+        const row = document.createElement("tr");
         row.innerHTML = `
           <td>${entry.day}</td>
           <td>${entry.totalBacklog}${index !== 0 ? ` → ${entry.netLeft}` : ""}</td>
@@ -404,8 +523,7 @@
         totalNew += entry.newAdded || 0;
       });
 
-      const currentNetLeft = backlogData[backlogData.length - 1].netLeft;
-      const initialBacklog = backlogData[0].totalBacklog;
+      const currentNetLeft = backlogData.length > 0 ? backlogData[backlogData.length - 1].netLeft : 0;
       const mainProgress = ((initialBacklog - currentNetLeft) / initialBacklog) * 100;
       document.getElementById("mainProgress").style.width = `${mainProgress}%`;
 
@@ -485,25 +603,45 @@
         const data = snapshot.val();
         if (data && Array.isArray(data)) {
           backlogData = data;
+          renderTable();
         } else {
           backlogData = [{
             day: "Start",
-            totalBacklog: 64,
+            totalBacklog: initialBacklog,
             lecturesDone: null,
             newAdded: null,
-            netLeft: 64
+            netLeft: initialBacklog
           }];
           dataRef.set(backlogData);
+          renderTable();
         }
-        renderTable();
       });
     }
 
     document.addEventListener("DOMContentLoaded", () => {
       const today = new Date().toISOString().split("T")[0];
       document.getElementById("entryDate").value = today;
-      loadData();
+      checkInitialLectures();
     });
+
+    function deleteAllData() {
+      if (confirm("Are you sure you want to delete all backlog data? This cannot be undone.")) {
+        const initialData = [{
+          day: "Start",
+          totalBacklog: initialBacklog,
+          lecturesDone: null,
+          newAdded: null,
+          netLeft: initialBacklog
+        }];
+        database.ref("backlogData").set(initialData).then(() => {
+          backlogData = initialData;
+          renderTable();
+          alert("All data has been deleted and reset to initial state.");
+        }).catch((error) => {
+          alert("Failed to delete data: " + error.message);
+        });
+      }
+    }
   </script>
 </body>
 </html>
