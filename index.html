@@ -1,351 +1,465 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Advanced Backlog Killer Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dark Backlog Tracker</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap"
+    rel="stylesheet">
   <style>
-    :root {
-        --primary: #D4AF37; /* Gold for royal aesthetic */
-        --secondary: #1C2526; /* Deep charcoal for Batman theme */
-        --accent: #4B0082; /* Regal purple */
-        --background: #121212; /* Dark, moody background */
-        --card-bg: rgba(255, 255, 255, 0.05);
-        --text: #cda935; /* Light, elegant text */
-        --border: rgba(212, 175, 55, 0.3); /* Subtle gold border */
-        --shadow: rgba(0, 0, 0, 0.5);
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
+     :root {
+      --primary: #3498db;
+      --secondary: #2c3e50;
+      --accent: #1abc9c;
+      --background: #121212;
+      --card-bg: #1e1e1e;
+      --text: #ecf0f1;
+      --border: #34495e;
+      --shadow: rgba(0, 0, 0, 0.5);
+      --success: #2ecc71;
+      --warning: #f39c12;
+      --danger: #e74c3c;
     }
 
     body {
-        font-family: 'Cinzel', serif; /* Vintage, royal font */
-        background: linear-gradient(135deg, var(--background), #1C2526);
-        color: var(--text);
-        min-height: 100vh;
-        padding: 2rem;
-        background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M30 0L0 30l30 30 30-30L30 0zm0 8l22 22-22 22-22-22L30 8z" fill="%23D4AF37" fill-opacity="0.05" fill-rule="evenodd"/%3E%3C/svg%3E');
-        background-size: 60px 60px;
+      background: linear-gradient(135deg, var(--background), #0d0d0d);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px 15px 60px;
+      position: relative;
+      line-height: 1.6;
+      
     }
 
     .container {
-        max-width: 1200px;
-        margin: 0 auto;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
     .header {
-        text-align: center;
-        margin-bottom: 2rem;
-        animation: slideDown 0.7s ease;
-        border-bottom: 2px solid var(--primary);
-        padding-bottom: 1rem;
+      text-align: center;
+      margin-bottom: 25px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--primary);
+      position: relative;
     }
 
     .header h1 {
-        font-size: 3rem;
-        color: var(--primary);
-        text-shadow: 2px 2px 4px var(--shadow);
-        letter-spacing: 2px;
-        font-weight: 700;
-        text-transform: uppercase;
+      font-size: 2.5rem;
+      color: var(--primary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      letter-spacing: 2px;
+      font-weight: bold;
+      font-family: 'Cinzel', serif;
+      text-shadow: 2px 2px 4px var(--shadow);
+      text-transform: uppercase;
     }
 
     .header p {
-        font-family: 'Lora', serif; /* Elegant, vintage font for subtitle */
-        font-style: italic;
-        color: var(--text);
-        font-size: 1.2rem;
+      font-size: 1.15rem;
+      color: #bdc3c7;
+      font-family: 'Lora', serif;
+      max-width: 600px;
+      margin: 0 auto;
+      font-style: italic;
     }
 
-    .grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 2rem;
-        margin-bottom: 2rem;
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 25px;
     }
 
-    @media (max-width: 768px) {
-        .grid {
-            grid-template-columns: 1fr;
-        }
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 5px 15px var(--shadow);
+      border: 1px solid var(--border);
+      text-align: center;
     }
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        background: var(--card-bg);
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 8px 40px var(--shadow);
-        border: 1px solid var(--border);
-        animation: fadeIn 0.7s ease;
+    .stat-card h3 {
+      font-size: 1rem;
+      color: var(--primary);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: 'Cinzel', serif;
+      letter-spacing: 1px;
     }
 
-    th, td {
-        padding: 1.2rem;
-        text-align: center;
-        border-bottom: 1px solid var(--border);
-        font-family: 'Lora', serif;
+    .stat-card .value {
+      font-size: 2.1rem;
+      font-weight: 700;
     }
 
-    th {
-        background: var(--secondary);
-        color: var(--primary);
-        font-weight: 600;
-        letter-spacing: 1px;
-        text-transform: uppercase;
+    .progress-section {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 5px 15px var(--shadow);
+      border: 1px solid var(--border);
     }
 
-    tr:hover {
-        background: rgba(212, 175, 55, 0.1);
-        transition: background 0.3s ease;
-    }
-
-    .completed {
-        color: var(--primary);
-        font-weight: bold;
-        text-shadow: 0 0 10px var(--primary);
-        animation: pulse 1.5s infinite;
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      color: var(--primary);
+      font-size: 1.3rem;
+      font-family: 'Cinzel', serif;
+      letter-spacing: 1px;
     }
 
     .progress-container {
-        background: var(--card-bg);
-        padding: 2rem;
-        border-radius: 15px;
-        box-shadow: 0 8px 30px var(--shadow);
-        border: 1px solid var(--border);
+      margin-top: 15px;
     }
 
-    .progress-container h2 {
-        font-size: 1.8rem;
-        color: var(--primary);
-        text-align: center;
-        margin-bottom: 1.5rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 1rem;
     }
 
     .progress-bar {
-        height: 25px;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 25px;
-        overflow: hidden;
-        margin: 1rem 0;
-        position: relative;
-        border: 1px solid var(--border);
+      height: 24px;
+      background: #2c3e50;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      border: 1.5px solid var(--primary);
     }
 
     .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, var(--primary), var(--accent));
-        transition: width 0.5s ease;
-        box-shadow: inset 0 0 10px rgba(212, 175, 55, 0.5);
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      border-radius: 10px;
+      transition: width 0.5s ease;
+      position: relative;
+      box-shadow: 0 0 10px var(--primary);
     }
 
-    .stats {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1.5rem;
-        margin-top: 2rem;
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
     }
 
-    .stat-box {
-        background: var(--card-bg);
-        padding: 1.5rem;
-        border-radius: 10px;
-        text-align: center;
-        border: 1px solid var(--border);
-        box-shadow: 0 4px 15px var(--shadow);
-        transition: transform 0.3s ease;
+    @keyframes shimmer {
+      0% {
+        background-position: -200% 0;
+      }
+
+      100% {
+        background-position: 200% 0;
+      }
     }
 
-    .stat-box:hover {
-        transform: translateY(-5px);
+    .table-section {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 5px 15px var(--shadow);
+      border: 1px solid var(--border);
+      overflow-x: auto;
     }
 
-    .stat-box h4 {
-        font-family: 'Cinzel', serif;
-        color: var(--primary);
-        font-size: 1.1rem;
-        margin-bottom: 0.5rem;
-        text-transform: uppercase;
+    .backlog-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px var(--shadow);
+      border: 1px solid var(--border);
     }
 
-    .add-form {
-        margin-top: 2rem;
-        background: var(--card-bg);
-        padding: 2rem;
-        border-radius: 15px;
-        box-shadow: 0 8px 30px var(--shadow);
-        border: 1px solid var(--border);
+    .backlog-table th {
+      background: var(--secondary);
+      color: var(--primary);
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 1rem;
+      text-transform: uppercase;
+      font-family: 'Cinzel', serif;
+      letter-spacing: 1px;
     }
 
-    .add-form h3 {
-        font-family: 'Cinzel', serif;
-        margin-bottom: 1.5rem;
-        font-size: 1.8rem;
-        color: var(--primary);
-        text-transform: uppercase;
-        letter-spacing: 1px;
+    .backlog-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--border);
+      font-size: 1rem;
+      font-family: 'Lora', serif;
+    }
+
+    .backlog-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .backlog-table tr:hover {
+      background: rgba(212, 175, 55, 0.05);
+      transition: background 0.3s;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .status-completed {
+      background: rgba(46, 204, 113, 0.2);
+      color: var(--success);
+    }
+
+    .status-in-progress {
+      background: rgba(52, 152, 219, 0.2);
+      color: var(--primary);
+    }
+
+    /* Form Section */
+    .form-section {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 5px 15px var(--shadow);
+      border: 1px solid var(--border);
+      margin-bottom: 40px;
     }
 
     .form-group {
-        margin-bottom: 1.2rem;
+      margin-bottom: 20px;
     }
 
-    label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-family: 'Lora', serif;
-        font-weight: 500;
-        font-size: 1rem;
-        color: var(--text);
-        letter-spacing: 0.5px;
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #bdc3c7;
+      font-size: 1rem;
+      font-family: 'Lora', serif;
     }
 
-    input {
-        width: 100%;
-        padding: 0.85rem;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid var(--border);
-        color: var(--text);
-        border-radius: 10px;
-        font-size: 1rem;
-        outline: none;
-        transition: border 0.3s ease, background 0.3s ease;
-        font-family: 'Lora', serif;
+    .form-control {
+      width: 100%;
+      padding: 14px;
+      background: #2c3e50;
+      border: 1.5px solid var(--primary);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      transition: all 0.3s;
+      font-family: 'Lora', serif;
     }
 
-    input:focus {
-        border-color: var(--primary);
-        background: rgba(212, 175, 55, 0.05);
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.13);
     }
 
-    button {
-        width: 100%;
-        padding: 1rem;
-        background: linear-gradient(90deg, var(--primary), var(--accent));
-        border: none;
-        color: var(--text);
-        border-radius: 10px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-family: 'Cinzel', serif;
-        font-size: 1.1rem;
-        font-weight: 600;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        box-shadow: 0 4px 15px var(--shadow);
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(90deg, var(--primary), #2980b9);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
 
-    button:hover {
-        transform: translateY(-3px);
-        background: linear-gradient(90deg, var(--accent), var(--primary));
-        box-shadow: 0 6px 20px var(--shadow);
-    }
-    
-    .delete-btn {
-        background: linear-gradient(90deg, #e74c3c, #c0392b);
-        margin-top: 10px;
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     }
 
-    @keyframes slideDown {
-        from { transform: translateY(-50px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
+    .btn-danger {
+      background: linear-gradient(90deg, var(--danger), #c0392b);
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+    .btn-success {
+      background: linear-gradient(90deg, var(--success), #27ae60);
     }
 
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.03); }
-        100% { transform: scale(1); }
+    .footer {
+      text-align: center;
+      padding: 25px 0 10px;
+      color: #7f8c8d;
+      font-size: 0.9rem;
+      font-family: 'Lora', serif;
     }
 
+    /* Confetti */
     .confetti {
-        position: fixed;
-        width: 12px;
-        height: 12px;
-        background: var(--primary);
-        top: 0;
-        opacity: 0;
-        z-index: 9999;
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      background: var(--primary);
+      top: 0;
+      opacity: 0;
+      z-index: 9999;
     }
 
     @keyframes confetti-fall {
-        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+      }
     }
-    
+
+    /* Modal */
     .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        backdrop-filter: blur(5px);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
     }
-    
+
     .modal-content {
-        background: var(--card-bg);
-        padding: 2rem;
-        border-radius: 15px;
-        max-width: 500px;
-        width: 90%;
-        border: 2px solid var(--primary);
-        box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
-        text-align: center;
+      background: var(--card-bg);
+      padding: 2rem;
+      border-radius: 15px;
+      max-width: 420px;
+      width: 90%;
+      border: 2px solid var(--primary);
+      box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+      text-align: center;
     }
-    
+
     .modal h2 {
-        color: var(--primary);
-        margin-bottom: 1.5rem;
-        font-size: 2rem;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      font-size: 2rem;
+      font-family: 'Cinzel', serif;
     }
-    
+
     .modal p {
-        margin-bottom: 1.5rem;
-        font-family: 'Lora', serif;
-        line-height: 1.6;
+      margin-bottom: 1.5rem;
+      font-family: 'Lora', serif;
+      line-height: 1.6;
     }
-    
+
     #initialLectureInput {
-        width: 100%;
-        padding: 12px;
-        font-size: 1.2rem;
-        margin-bottom: 1.5rem;
-        text-align: center;
+      width: 100%;
+      padding: 12px;
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      border-radius: 7px;
+      border: 1.5px solid var(--primary);
+      background: #232323;
+      color: var(--text);
+      font-family: inherit;
     }
-    
+
     .modal-btn {
-        display: inline-block;
-        width: auto;
-        padding: 0.8rem 2rem;
-        margin: 0 0.5rem;
-        font-size: 1rem;
+      display: inline-block;
+      width: auto;
+      padding: 0.8rem 2rem;
+      margin: 0 0.5rem;
+      font-size: 1rem;
+      border-radius: 7px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      color: var(--text);
+      border: none;
+      font-family: 'Cinzel', serif;
+      font-weight: 600;
+      cursor: pointer;
     }
-    
+
     .hidden {
-        display: none;
+      display: none;
+    }
+
+    @media (min-width: 768px) {
+      .header h1 {
+        font-size: 2.7rem;
+      }
+
+      .header p {
+        font-size: 1.13rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+      }
+
+      .section-title {
+        font-size: 1.45rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stat-card .value {
+        font-size: 1.25rem;
+      }
+
+      .backlog-table th,
+      .backlog-table td {
+        padding: 10px 8px;
+        font-size: 0.85rem;
+      }
     }
   </style>
 </head>
+
 <body>
+  <!-- Initial Modal -->
   <div class="modal" id="initialModal">
     <div class="modal-content">
       <h2>🦇 Enter Your Initial Backlog</h2>
@@ -356,77 +470,99 @@
       </div>
     </div>
   </div>
-
-  <div class="container" id="mainContent">
-    <div class="header">
-      <h1>🦇 The Dark Knight's Backlog Tracker</h1>
-      <p>Master your tasks with the vigilance of Gotham's protector</p>
+  <!-- Main Content -->
+  <div class="container hidden" id="mainContent">
+    <div class="header fade-in">
+      <h1><i class="fas fa-tasks"></i> Backlog Tracker</h1>
+      <p>Track your progress and eliminate your backlog systematically</p>
     </div>
-
-    <div class="grid">
-      <div>
-        <table id="backlogTable">
+    <!-- Stats Summary -->
+    <div class="stats-grid">
+      <div class="stat-card fade-in" style="animation-delay: 0.1s;">
+        <h3><i class="fas fa-layer-group"></i> Total Backlog</h3>
+        <div class="value" id="totalBacklog">0</div>
+      </div>
+      <div class="stat-card fade-in" style="animation-delay: 0.2s;">
+        <h3><i class="fas fa-check-circle"></i> Completed</h3>
+        <div class="value" id="completed">0</div>
+      </div>
+      <div class="stat-card fade-in" style="animation-delay: 0.3s;">
+        <h3><i class="fas fa-plus-circle"></i> New Added</h3>
+        <div class="value" id="newAddedStat">0</div>
+      </div>
+      <div class="stat-card fade-in" style="animation-delay: 0.4s;">
+        <h3><i class="fas fa-hourglass-half"></i> Remaining</h3>
+        <div class="value" id="remaining">0</div>
+      </div>
+    </div>
+    <!-- Progress Section -->
+    <div class="progress-section fade-in" style="animation-delay: 0.5s;">
+      <div class="section-title">
+        <i class="fas fa-chart-line"></i>
+        <h2>Progress Overview</h2>
+      </div>
+      <div class="progress-container">
+        <div class="progress-info">
+          <span>Progress: <strong id="progressPercent">0%</strong></span>
+          <span><span id="completedLectures">0</span>/<span id="totalLectures">0</span> lectures</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="mainProgress" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Table Section -->
+    <div class="table-section fade-in" style="animation-delay: 0.6s;">
+      <div class="section-title">
+        <i class="fas fa-table"></i>
+        <h2>Progress History</h2>
+      </div>
+      <div class="table-responsive">
+        <table class="backlog-table" id="backlogTable">
           <thead>
             <tr>
-              <th>Day</th>
-              <th>Total Backlog</th>
+              <th>Date</th>
               <th>Lectures Done</th>
               <th>New Added</th>
-              <th>Net Left</th>
-              <th>Progress</th>
+              <th>Net Change</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
         </table>
-
-        <div class="add-form">
-          <h3>Record Your Progress</h3>
-          <div class="form-group">
-            <label for="entryDate">Date</label>
-            <input type="date" id="entryDate" required />
-          </div>
-          <div class="form-group">
-            <label for="lecturesDone">Lectures Completed</label>
-            <input type="number" id="lecturesDone" placeholder="Enter number" min="0" required />
-          </div>
-          <div class="form-group">
-            <label for="newAdded">New Lectures Added</label>
-            <input type="number" id="newAdded" placeholder="Enter number" min="0" value="0" />
-          </div>
-          <button onclick="addEntry()">Add Progress</button>
-          <button class="delete-btn" onclick="deleteAllData()">Delete All Data</button>
-        </div>
-      </div>
-
-      <div class="progress-container">
-        <h2>Campaign Progress</h2>
-        <div class="progress-bar">
-          <div class="progress-fill" id="mainProgress"></div>
-        </div>
-        <div class="stats">
-          <div class="stat-box">
-            <h4>Total Lectures Done</h4>
-            <p id="totalLectures">0</p>
-          </div>
-          <div class="stat-box">
-            <h4>Total New Added</h4>
-            <p id="totalNew">0</p>
-          </div>
-          <div class="stat-box">
-            <h4>Initial Backlog</h4>
-            <p id="initialBacklog">0</p>
-          </div>
-          <div class="stat-box">
-            <h4>Current Backlog</h4>
-            <p id="currentBacklog">0</p>
-          </div>
-        </div>
       </div>
     </div>
+    <!-- Form Section -->
+    <div class="form-section fade-in" style="animation-delay: 0.7s;">
+      <div class="section-title">
+        <i class="fas fa-plus-circle"></i>
+        <h2>Add New Progress</h2>
+      </div>
+      <div class="form-container">
+        <div class="form-group">
+          <label for="entryDate"><i class="far fa-calendar"></i> Date</label>
+          <input type="date" class="form-control" id="entryDate">
+        </div>
+        <div class="form-group">
+          <label for="lecturesDone"><i class="fas fa-check"></i> Lectures Completed</label>
+          <input type="number" class="form-control" id="lecturesDone" placeholder="Enter number" min="0" value="0">
+        </div>
+        <div class="form-group">
+          <label for="newAdded"><i class="fas fa-plus"></i> New Lectures Added</label>
+          <input type="number" class="form-control" id="newAdded" placeholder="Enter number" min="0" value="0">
+        </div>
+      </div>
+      <button class="btn btn-success" onclick="addEntry()"><i class="fas fa-save"></i> Save Progress</button>
+      <button class="btn btn-danger" onclick="deleteAllData()"><i class="fas fa-trash-alt"></i> Reset All Data</button>
+    </div>
+    <div class="footer fade-in" style="animation-delay: 0.8s;">
+      <p>Dark Backlog Tracker v2.0 • Made with <i class="fas fa-heart" style="color: #e74c3c;"></i> for productive
+        developers</p>
+      <p><i class="fas fa-sync-alt"></i> Last updated: <span id="lastUpdated">Never</span></p>
+    </div>
   </div>
-
   <script>
-    // Firebase Config
+    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyCYY2GQqS0tCXb7Oxw8AWXhpexq9e8VRUs",
       authDomain: "aspirehub-32863.firebaseapp.com",
@@ -437,15 +573,13 @@
       measurementId: "G-KX41R0SSMY",
       databaseURL: "https://aspirehub-32863-default-rtdb.asia-southeast1.firebasedatabase.app"
     };
-
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const dataRef = database.ref("backlogData");
-
     let backlogData = [];
     let initialBacklog = 0;
 
-    // Check if initial lectures are set
+    // Modal logic
     function checkInitialLectures() {
       const savedInitial = localStorage.getItem('initialLectures');
       if (savedInitial) {
@@ -458,134 +592,140 @@
         document.getElementById('mainContent').classList.add('hidden');
       }
     }
-
-    // Save initial lectures to localStorage
     function saveInitialLectures() {
       const input = document.getElementById('initialLectureInput');
       const count = parseInt(input.value);
-      
       if (isNaN(count) || count <= 0) {
         alert('Please enter a valid number of lectures');
         return;
       }
-      
       localStorage.setItem('initialLectures', count);
       initialBacklog = count;
       document.getElementById('initialModal').classList.add('hidden');
       document.getElementById('mainContent').classList.remove('hidden');
-      
-      // Initialize data with start point
       backlogData = [{
-        day: "Start",
-        totalBacklog: initialBacklog,
-        lecturesDone: null,
-        newAdded: null,
+        date: "Start",
+        lecturesDone: 0,
+        newAdded: 0,
+        netChange: 0,
+        status: "In Progress",
         netLeft: initialBacklog
       }];
-      
-      // Save to Firebase
       dataRef.set(backlogData);
-      renderTable();
+      renderAll();
     }
 
-    function renderTable() {
-      const tbody = document.getElementById("tableBody");
-      tbody.innerHTML = "";
-
-      let totalLectures = 0;
-      let totalNew = 0;
-
-      backlogData.forEach((entry, index) => {
-        const progress = (1 - entry.netLeft / initialBacklog) * 100;
-
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${entry.day}</td>
-          <td>${entry.totalBacklog}${index !== 0 ? ` → ${entry.netLeft}` : ""}</td>
-          <td>${entry.lecturesDone || "-"}</td>
-          <td>${entry.newAdded || "-"}</td>
-          <td>${entry.netLeft} ${entry.netLeft === 0 ? "✅" : ""}</td>
-          <td>
-            <div class="progress-bar" style="height: 10px;">
-              <div class="progress-fill" style="width: ${progress}%; background: ${getProgressColor(progress)};"></div>
-            </div>
-          </td>
-        `;
-
-        if (entry.netLeft === 0) {
-          row.classList.add("completed");
-          celebrate();
-        }
-
-        tbody.appendChild(row);
-
-        totalLectures += entry.lecturesDone || 0;
-        totalNew += entry.newAdded || 0;
-      });
-
-      const currentNetLeft = backlogData.length > 0 ? backlogData[backlogData.length - 1].netLeft : 0;
-      const mainProgress = ((initialBacklog - currentNetLeft) / initialBacklog) * 100;
-      document.getElementById("mainProgress").style.width = `${mainProgress}%`;
-
-      document.getElementById("totalLectures").textContent = totalLectures;
-      document.getElementById("totalNew").textContent = totalNew;
-      document.getElementById("currentBacklog").textContent = currentNetLeft;
-      document.getElementById("initialBacklog").textContent = initialBacklog;
-    }
-
-    function getProgressColor(percentage) {
-      if (percentage > 75) return "#D4AF37";
-      if (percentage > 50) return "#FFD700";
-      return "#4B0082";
-    }
-
+    // Add entry
     function addEntry() {
       const dateInput = document.getElementById("entryDate");
       const lecturesInput = document.getElementById("lecturesDone");
       const newAddedInput = document.getElementById("newAdded");
-
       const date = dateInput.value;
       const lecturesDone = parseInt(lecturesInput.value) || 0;
       const newAdded = parseInt(newAddedInput.value) || 0;
-
       if (!date || lecturesDone < 0 || newAdded < 0) {
         alert("Invalid input.");
         return;
       }
-
       const lastEntry = backlogData[backlogData.length - 1];
-      const newNetLeft = lastEntry.netLeft - lecturesDone + newAdded;
-
-      if (newNetLeft < 0) {
-        alert("Net left cannot be negative.");
-        return;
-      }
-
+      const netChange = lecturesDone - newAdded;
+      let netLeft = lastEntry.netLeft - lecturesDone + newAdded;
+      if (netLeft < 0) netLeft = 0;
+      const status = netLeft === 0 ? "Completed" : "In Progress";
       const formattedDate = new Date(date).toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric"
+        year: "numeric", month: "short", day: "numeric"
       });
-
-      const newEntry = {
-        day: formattedDate,
-        totalBacklog: lastEntry.netLeft,
+      const entry = {
+        date: formattedDate,
         lecturesDone,
         newAdded,
-        netLeft: newNetLeft
+        netChange,
+        status,
+        netLeft
       };
-
-      backlogData.push(newEntry);
-      renderTable();
-      dataRef.set(backlogData); // Save to Firebase
-
+      backlogData.push(entry);
+      dataRef.set(backlogData);
+      renderAll();
       lecturesInput.value = "";
       newAddedInput.value = "0";
+      document.getElementById("lastUpdated").textContent = formattedDate;
+      if (netLeft === 0) celebrate();
     }
 
+    // Render all
+    function renderAll() {
+      renderStats();
+      renderProgress();
+      renderTable();
+    }
+    function renderStats() {
+      let totalLectures = 0, totalNew = 0;
+      backlogData.forEach((entry, i) => {
+        if (i === 0) return;
+        totalLectures += entry.lecturesDone || 0;
+        totalNew += entry.newAdded || 0;
+      });
+      const remaining = initialBacklog - totalLectures + totalNew;
+      document.getElementById("totalBacklog").textContent = initialBacklog;
+      document.getElementById("completed").textContent = totalLectures;
+      document.getElementById("newAddedStat").textContent = totalNew;
+      document.getElementById("remaining").textContent = remaining >= 0 ? remaining : 0;
+      document.getElementById("completedLectures").textContent = totalLectures;
+      document.getElementById("totalLectures").textContent = initialBacklog;
+    }
+    function renderProgress() {
+      let totalLectures = 0, totalNew = 0, lastNetLeft = initialBacklog;
+      if (backlogData.length > 0) {
+        backlogData.forEach((entry, i) => {
+          if (i === 0) return;
+          totalLectures += entry.lecturesDone || 0;
+          totalNew += entry.newAdded || 0;
+        });
+        lastNetLeft = backlogData[backlogData.length - 1].netLeft;
+      }
+      let progress = Math.round(((initialBacklog - lastNetLeft) / initialBacklog) * 100);
+      if (progress < 0) progress = 0;
+      if (progress > 100) progress = 100;
+      document.getElementById("progressPercent").textContent = progress + "%";
+      document.getElementById("mainProgress").style.width = progress + "%";
+    }
+    function renderTable() {
+      const tbody = document.getElementById("tableBody");
+      tbody.innerHTML = "";
+      backlogData.forEach((entry, i) => {
+        if (i === 0) return; // skip "Start"
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${entry.date}</td>
+          <td>${entry.lecturesDone}</td>
+          <td>${entry.newAdded}</td>
+          <td>${entry.netChange >= 0 ? "+" : ""}${entry.netChange}</td>
+          <td><span class="status-badge ${entry.status === "Completed" ? "status-completed" : "status-in-progress"}">
+            ${entry.status}
+          </span></td>
+        `;
+        tbody.appendChild(row);
+      });
+      // Today row
+      const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+      const last = backlogData[backlogData.length - 1];
+      if (last && last.status !== "Completed") {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${today}</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td><span class="status-badge status-in-progress">In Progress</span></td>
+        `;
+        tbody.appendChild(row);
+      }
+    }
+
+    // Confetti
     function celebrate() {
       const colors = ["#D4AF37", "#FFD700", "#4B0082", "#1C2526"];
-      for (let i = 0; i < 150; i++) {
+      for (let i = 0; i < 100; i++) {
         setTimeout(() => {
           const confetti = document.createElement("div");
           confetti.className = "confetti";
@@ -598,50 +738,52 @@
       }
     }
 
-    function loadData() {
-      dataRef.once("value").then((snapshot) => {
-        const data = snapshot.val();
-        if (data && Array.isArray(data)) {
-          backlogData = data;
-          renderTable();
-        } else {
-          backlogData = [{
-            day: "Start",
-            totalBacklog: initialBacklog,
-            lecturesDone: null,
-            newAdded: null,
-            netLeft: initialBacklog
-          }];
-          dataRef.set(backlogData);
-          renderTable();
-        }
-      });
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const today = new Date().toISOString().split("T")[0];
-      document.getElementById("entryDate").value = today;
-      checkInitialLectures();
-    });
-
+    // Delete all data
     function deleteAllData() {
       if (confirm("Are you sure you want to delete all backlog data? This cannot be undone.")) {
         const initialData = [{
-          day: "Start",
-          totalBacklog: initialBacklog,
-          lecturesDone: null,
-          newAdded: null,
+          date: "Start",
+          lecturesDone: 0,
+          newAdded: 0,
+          netChange: 0,
+          status: "In Progress",
           netLeft: initialBacklog
         }];
         database.ref("backlogData").set(initialData).then(() => {
           backlogData = initialData;
-          renderTable();
+          renderAll();
           alert("All data has been deleted and reset to initial state.");
         }).catch((error) => {
           alert("Failed to delete data: " + error.message);
         });
       }
     }
+    function loadData() {
+      dataRef.once("value").then((snapshot) => {
+        const data = snapshot.val();
+        if (data && Array.isArray(data)) {
+          backlogData = data;
+          renderAll();
+        } else {
+          backlogData = [{
+            date: "Start",
+            lecturesDone: 0,
+            newAdded: 0,
+            netChange: 0,
+            status: "In Progress",
+            netLeft: initialBacklog
+          }];
+          dataRef.set(backlogData);
+          renderAll();
+        }
+      });
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().split("T")[0];
+      document.getElementById("entryDate").value = today;
+      checkInitialLectures();
+    });
   </script>
 </body>
+
 </html>
