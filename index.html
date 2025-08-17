@@ -1429,7 +1429,7 @@
     </main>
   </div>
 
-  <script>
+<script>
     // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyCYY2GQqS0tCXb7Oxw8AWXhpexq9e8VRUs",
@@ -1464,8 +1464,19 @@
       updatedAt: null
     };
 
+    // Real-time listener
+    let unsubscribeListener = null;
+    let isUpdatingFromRemote = false;
+
     // Cropper instance
     let cropper = null;
+
+    // Touch/Swipe variables
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+    let isSwiping = false;
 
     // DOM elements
     const menuButton = document.getElementById('menu-button');
@@ -1513,6 +1524,60 @@
     const navActions = document.getElementById('nav-actions');
     const navProfileSection = document.getElementById('nav-profile-section');
     const sidebarProfileBtn = document.getElementById('sidebar-profile-btn');
+
+    // Touch/Swipe functions
+    function handleTouchStart(e) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches.clientY;
+      
+      // Only start tracking if touch starts from left edge (within 50px from left)
+      if (touchStartX <= 50 && window.innerWidth > 1024) {
+        return; // Don't handle swipe on desktop
+      }
+      
+      if (touchStartX <= 50) {
+        isSwiping = true;
+      }
+    }
+
+    function handleTouchMove(e) {
+      if (!isSwiping) return;
+      
+      touchEndX = e.touches[0].clientX;
+      touchEndY = e.touches.clientY;
+      
+      // Prevent default scrolling if we're swiping horizontally
+      const deltaX = Math.abs(touchEndX - touchStartX);
+      const deltaY = Math.abs(touchEndY - touchStartY);
+      
+      if (deltaX > deltaY && deltaX > 20) {
+        e.preventDefault();
+      }
+    }
+
+    function handleTouchEnd(e) {
+      if (!isSwiping) return;
+      
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+      const minSwipeDistance = 80;
+      
+      // Check if it's a valid left-to-right swipe
+      if (deltaX > minSwipeDistance && Math.abs(deltaY) < 100) {
+        // Only open sidebar if it's currently closed
+        if (!sidebar.classList.contains('open')) {
+          sidebar.classList.add('open');
+          sidebarOverlay.classList.add('active');
+        }
+      }
+      
+      // Reset swipe tracking
+      isSwiping = false;
+      touchStartX = 0;
+      touchStartY = 0;
+      touchEndX = 0;
+      touchEndY = 0;
+    }
 
     // Utility functions
     function safeString(val, fallback = '') {
@@ -1603,6 +1668,54 @@
       updateUserAvatar();
     }
 
+    // Real-time sync functions
+    function setupRealtimeListener() {
+      if (!currentUser || unsubscribeListener) return;
+
+      const docRef = db.collection('lectureBacklogs').doc(currentUser.uid);
+      
+      unsubscribeListener = docRef.onSnapshot((doc) => {
+        if (doc.exists && !isUpdatingFromRemote) {
+          const remoteData = doc.data();
+          
+          // Check if remote data is newer
+          if (remoteData.updatedAt && (!appData.updatedAt || new Date(remoteData.updatedAt) > new Date(appData.updatedAt))) {
+            console.log('Updating from remote data...');
+            isUpdatingFromRemote = true;
+            
+            // Merge remote data with local
+            const oldEntryCount = appData.dailyEntries.length;
+            appData = { ...appData, ...remoteData };
+            
+            // Save to local storage
+            saveLocalData();
+            
+            // Update UI
+            updateUI();
+            
+            // Show notification if new data was synced
+            const newEntryCount = appData.dailyEntries.length;
+            if (newEntryCount > oldEntryCount) {
+              toast(`Synced ${newEntryCount - oldEntryCount} new entries from another device!`, 'success');
+            } else if (remoteData.updatedAt !== appData.updatedAt) {
+              toast('Data synced from another device!', 'success');
+            }
+            
+            isUpdatingFromRemote = false;
+          }
+        }
+      }, (error) => {
+        console.error('Real-time listener error:', error);
+      });
+    }
+
+    function removeRealtimeListener() {
+      if (unsubscribeListener) {
+        unsubscribeListener();
+        unsubscribeListener = null;
+      }
+    }
+
     // Initialize app
     function initializeApp() {
       setToday();
@@ -1617,6 +1730,11 @@
     }
 
     function setupEventListeners() {
+      // Touch/swipe events
+      document.addEventListener('touchstart', handleTouchStart, { passive: false });
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
+
       // Mobile menu
       menuButton.addEventListener('click', toggleSidebar);
       sidebarOverlay.addEventListener('click', closeSidebar);
@@ -2084,13 +2202,15 @@
     }
 
     async function syncToFirestore() {
-      if (!currentUser) return;
+      if (!currentUser || isUpdatingFromRemote) return;
 
       try {
         const docRef = db.collection('lectureBacklogs').doc(currentUser.uid);
         await docRef.set(appData, { merge: true });
+        console.log('Data synced to Firestore');
       } catch (error) {
         console.error('Error syncing to Firestore:', error);
+        toast('Sync failed. Will retry when online.', 'error');
       }
     }
 
@@ -2103,10 +2223,11 @@
 
         if (doc.exists) {
           const remoteData = doc.data();
+          
           // Simple merge strategy: use remote if it's newer
           if (remoteData.updatedAt && (!appData.updatedAt || new Date(remoteData.updatedAt) > new Date(appData.updatedAt))) {
             // Merge guest data with remote data if user just signed in
-            if (!currentUser && appData.dailyEntries.length > 0) {
+            if (appData.dailyEntries.length > 0) {
               // If guest has data, merge it
               const guestEntries = appData.dailyEntries;
               appData = { ...appData, ...remoteData };
@@ -2129,6 +2250,7 @@
             }
             saveLocalData();
             updateUI();
+            toast('Data synced successfully!');
           } else {
             // Push local data to remote
             await syncToFirestore();
@@ -2137,8 +2259,13 @@
           // First time user, push local data
           await syncToFirestore();
         }
+
+        // Set up real-time listener after initial load
+        setupRealtimeListener();
+        
       } catch (error) {
         console.error('Error loading from Firestore:', error);
+        toast('Failed to sync data. Check your connection.', 'error');
       }
     }
 
@@ -2150,15 +2277,21 @@
 
       if (user) {
         // User signed in
+        console.log('User signed in, setting up sync...');
         if (wasGuest) {
-          // Just signed in, merge local guest data
+          // Just signed in, merge local guest data and set up real-time sync
           loadFromFirestore();
         } else {
-          // Already signed in, just sync
+          // Already signed in, just sync and ensure listener is active
           syncToFirestore();
+          if (!unsubscribeListener) {
+            setupRealtimeListener();
+          }
         }
       } else {
         // User signed out or is guest
+        console.log('User signed out, removing real-time sync...');
+        removeRealtimeListener();
         // Clear profile picture on logout
         appData.profilePicture = null;
         loadLocalData();
@@ -2168,7 +2301,35 @@
 
     // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', initializeApp);
+
+    // Handle page visibility changes to maintain connection
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && currentUser && !unsubscribeListener) {
+        console.log('Page visible, reconnecting real-time sync...');
+        setupRealtimeListener();
+      }
+    });
+
+    // Handle online/offline events
+    window.addEventListener('online', () => {
+      if (currentUser) {
+        console.log('Back online, syncing data...');
+        syncToFirestore();
+        if (!unsubscribeListener) {
+          setupRealtimeListener();
+        }
+      }
+    });
+
+    window.addEventListener('offline', () => {
+      console.log('Gone offline, data will sync when back online');
+      toast('You are offline. Data will sync when connection is restored.', 'error');
+    });
   </script>
+</body>
+
+</html>
+
 </body>
 
 </html>
