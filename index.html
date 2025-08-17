@@ -2,9 +2,9 @@
 <html lang="en">
 
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lecture Backlog Tracker — Mobile Optimized</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lecture Backlog Tracker</title>
 
   <!-- Firebase v9 compat -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -15,834 +15,12 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
+  <!-- Cropper.js for image cropping -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
   <style>
-    :root {
-      --bg: #0b0f1a;
-      --surface: #121a2e;
-      --glass: rgba(255, 255, 255, 0.06);
-      --border: 1px solid rgba(255, 255, 255, 0.12);
-      --text: #e9eefc;
-      --muted: #b7c0d7;
-
-      --primary: #6c6ff5;
-      --primary-2: #3dd9ff;
-      --success: #10d7a3;
-      --warn: #ffb86b;
-      --danger: #ff5c7a;
-
-      --shadow-1: 0 8px 25px rgba(0, 0, 0, 0.3);
-      --shadow-2: 0 15px 45px rgba(0, 0, 0, 0.4);
-      --radius: 16px;
-      --radius-sm: 12px;
-      --sidebar-w: 280px;
-      --header-h: 56px;
-
-      --mobile-pad: 14px;
-      --mobile-gap: 10px;
-      --touch-target: 44px;
-    }
-
-    * {
-      box-sizing: border-box
-    }
-
-    html,
-    body {
-      margin: 0;
-      padding: 0
-    }
-
-    body {
-      background:
-        radial-gradient(800px 500px at 10% 5%, #141b34 0%, var(--bg) 50%, #090d16 100%),
-        linear-gradient(180deg, #0c1222, #070b14);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      font-size: 14px;
-    }
-
-    .app {
-      display: grid;
-      grid-template-columns: var(--sidebar-w) 1fr;
-      grid-template-rows: var(--header-h) auto;
-      grid-template-areas: "sidebar header" "sidebar main";
-      min-height: 100vh;
-    }
-
-    @media (max-width: 960px) {
-      .app {
-        grid-template-columns: 1fr;
-        grid-template-areas: "header" "main";
-      }
-    }
-
-    header.appbar {
-      grid-area: header;
-      height: var(--header-h);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 0 var(--mobile-pad);
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.04));
-      border-bottom: var(--border);
-      backdrop-filter: blur(12px);
-      position: sticky;
-      top: 0;
-      z-index: 30;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .logo {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background: conic-gradient(from 230deg, var(--primary-2), var(--primary), #b06cff, var(--primary-2));
-      box-shadow: 0 4px 15px rgba(61, 217, 255, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.1);
-    }
-
-    .title h1 {
-      margin: 0;
-      font-size: 14px;
-      letter-spacing: .1px;
-      line-height: 1.2;
-      font-weight: 700;
-    }
-
-    .title .sub {
-      color: var(--muted);
-      font-size: 10px;
-      margin-top: 1px;
-    }
-
-    .menu-btn {
-      display: none;
-      border: none;
-      background: transparent;
-      color: var(--text);
-      font-size: 18px;
-      cursor: pointer;
-      padding: 6px;
-      border-radius: 6px;
-      min-width: var(--touch-target);
-      min-height: var(--touch-target);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .menu-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    @media (max-width: 960px) {
-      .menu-btn {
-        display: flex
-      }
-    }
-
-    .sidebar {
-      grid-area: sidebar;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-      border-right: var(--border);
-      backdrop-filter: blur(12px);
-      padding: var(--mobile-pad);
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow-y: auto;
-      box-shadow: var(--shadow-1);
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-
-    .sidebar::-webkit-scrollbar {
-      display: none;
-    }
-
-    @media (max-width: 960px) {
-      .sidebar {
-        position: fixed;
-        inset: 0 auto 0 0;
-        width: min(82vw, 280px);
-        transform: translateX(-105%);
-        transition: transform .25s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 45;
-        box-shadow: var(--shadow-2);
-      }
-
-      .sidebar.open {
-        transform: translateX(0)
-      }
-
-      .sidebar-backdrop {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(6px);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity .2s ease;
-        z-index: 40;
-      }
-
-      .sidebar-backdrop.show {
-        opacity: 1;
-        pointer-events: auto;
-      }
-    }
-
-    .side-section {
-      margin-bottom: 16px
-    }
-
-    .side-title {
-      font-weight: 700;
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: .4px;
-      margin: 8px 10px 6px;
-      text-transform: uppercase;
-    }
-
-    .side-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 10px;
-      margin: 3px 0;
-      border-radius: 10px;
-      cursor: pointer;
-      border: var(--border);
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--text);
-      transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
-      min-height: var(--touch-target);
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    .side-item:hover,
-    .side-item:active {
-      transform: translateY(-1px);
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .side-item .icon {
-      width: 28px;
-      height: 28px;
-      display: grid;
-      place-items: center;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      font-size: 14px;
-    }
-
-    main {
-      grid-area: main;
-      padding: var(--mobile-pad);
-      max-width: 1100px;
-      margin: 0 auto;
-      width: 100%;
-    }
-
-    .card {
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.04));
-      border: var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-2);
-      padding: 16px;
-      margin-bottom: var(--mobile-gap);
-      backdrop-filter: blur(12px);
-    }
-
-    @media (max-width: 600px) {
-      .card {
-        padding: 12px;
-        border-radius: 12px;
-      }
-
-      main {
-        padding: 10px;
-      }
-    }
-
-    .surface {
-      background: rgba(255, 255, 255, 0.06);
-      border: var(--border);
-      border-radius: var(--radius-sm);
-      padding: 12px;
-    }
-
-    .grid {
-      display: grid;
-      gap: var(--mobile-gap);
-      grid-template-columns: repeat(12, 1fr)
-    }
-
-    .col-12 {
-      grid-column: span 12
-    }
-
-    .col-8 {
-      grid-column: span 8
-    }
-
-    .col-6 {
-      grid-column: span 6
-    }
-
-    .col-4 {
-      grid-column: span 4
-    }
-
-    .col-3 {
-      grid-column: span 3
-    }
-
-    @media (max-width: 900px) {
-
-      .col-8,
-      .col-6 {
-        grid-column: span 12
-      }
-    }
-
-    @media (max-width: 600px) {
-
-      .col-4,
-      .col-3 {
-        grid-column: span 12
-      }
-
-      .grid {
-        gap: 8px;
-      }
-    }
-
-    .stat {
-      display: flex;
-      align-items: center;
-      gap: 10px
-    }
-
-    .stat .icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      display: grid;
-      place-items: center;
-      background: radial-gradient(60px 40px at 50% 0%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
-      box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
-      font-size: 16px;
-    }
-
-    .label {
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 500;
-    }
-
-    .value {
-      font-weight: 800;
-      font-size: 16px;
-      line-height: 1.2;
-    }
-
-    @media (max-width: 600px) {
-      .stat {
-        gap: 8px
-      }
-
-      .stat .icon {
-        width: 32px;
-        height: 32px;
-        font-size: 14px;
-      }
-
-      .value {
-        font-size: 15px;
-      }
-
-      .label {
-        font-size: 10px;
-      }
-    }
-
-    .muted {
-      color: var(--muted)
-    }
-
-    .center {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap
-    }
-
-    .btn {
-      border: none;
-      border-radius: 10px;
-      padding: 12px 16px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 13px;
-      letter-spacing: .05px;
-      transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
-      min-height: var(--touch-target);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .btn:hover,
-    .btn:focus {
-      transform: translateY(-1px);
-    }
-
-    .btn:active {
-      transform: translateY(0);
-    }
-
-    @media (max-width: 600px) {
-      .btn {
-        padding: 10px 14px;
-        font-size: 12px;
-        min-height: 40px;
-      }
-    }
-
-    .btn-primary {
-      color: #fff;
-      background: linear-gradient(135deg, var(--primary-2), var(--primary));
-      box-shadow: 0 6px 20px rgba(61, 217, 255, 0.25)
-    }
-
-    .btn-success {
-      background: linear-gradient(135deg, var(--success), #02c0a0);
-      color: #051b15
-    }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--text);
-      border: var(--border)
-    }
-
-    .btn-warn {
-      background: linear-gradient(135deg, var(--warn), #ff9966);
-      color: #2c1704
-    }
-
-    .field {
-      margin-bottom: 12px
-    }
-
-    label {
-      display: block;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 500;
-      margin-bottom: 5px
-    }
-
-    input {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text);
-      outline: none;
-      transition: all .2s ease;
-      font-size: 14px;
-      min-height: var(--touch-target);
-    }
-
-    input:focus {
-      border-color: rgba(108, 111, 245, 0.6);
-      background: rgba(255, 255, 255, 0.08);
-      box-shadow: 0 0 0 2px rgba(108, 111, 245, 0.1);
-    }
-
-    input::placeholder {
-      color: #c7ceff99
-    }
-
-    @media (max-width: 600px) {
-      input {
-        padding: 10px 12px;
-        font-size: 14px;
-      }
-
-      label {
-        font-size: 11px;
-      }
-    }
-
-    .progress-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .progressbar {
-      height: 12px;
-      border-radius: 999px;
-      overflow: hidden;
-      background: rgba(255, 255, 255, 0.06);
-      border: var(--border)
-    }
-
-    .fill {
-      height: 100%;
-      width: 0;
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--success), var(--primary-2));
-      position: relative;
-      transition: width .8s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .fill::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -40%;
-      height: 100%;
-      width: 40%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-      animation: shimmer 2.3s infinite;
-    }
-
-    @keyframes shimmer {
-      0% {
-        left: -40%
-      }
-
-      100% {
-        left: 120%
-      }
-    }
-
-    .circle-wrap {
-      display: flex;
-      justify-content: center;
-      margin-top: 12px
-    }
-
-    .circular {
-      position: relative;
-      width: 130px;
-      height: 130px;
-      filter: drop-shadow(0 6px 15px rgba(61, 217, 255, 0.25))
-    }
-
-    .circular svg {
-      width: 100%;
-      height: 100%;
-      transform: rotate(-90deg)
-    }
-
-    .circular .bg {
-      fill: none;
-      stroke: rgba(255, 255, 255, 0.14);
-      stroke-width: 6
-    }
-
-    .circular .fg {
-      fill: none;
-      stroke: url(#grad1);
-      stroke-width: 6;
-      stroke-linecap: round;
-      stroke-dasharray: 377;
-      stroke-dashoffset: 377;
-      transition: stroke-dashoffset 800ms cubic-bezier(0.4, 0, 0.2, 1)
-    }
-
-    .circle-text {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      font-weight: 800;
-      font-size: 16px
-    }
-
-    @media (max-width: 600px) {
-      .circular {
-        width: 110px;
-        height: 110px;
-      }
-
-      .circular .bg,
-      .circular .fg {
-        stroke-width: 5
-      }
-
-      .circular .fg {
-        stroke-dasharray: 314;
-        stroke-dashoffset: 314;
-      }
-
-      .circle-text {
-        font-size: 14px
-      }
-    }
-
-    .mini-chart {
-      position: relative;
-      width: 100%;
-      height: 160px;
-      border-radius: 10px;
-      border: var(--border);
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.03));
-      overflow: hidden;
-      touch-action: pan-x;
-    }
-
-    @media (max-width: 600px) {
-      .mini-chart {
-        height: 140px;
-        border-radius: 8px;
-      }
-    }
-
-    .gridlines {
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(to top, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 32px);
-      pointer-events: none;
-    }
-
-    .bar {
-      position: absolute;
-      bottom: 10px;
-      width: 10%;
-      min-width: 12px;
-      border-radius: 4px 4px 2px 2px;
-      background: linear-gradient(135deg, var(--success), #02c0a0);
-      box-shadow: 0 4px 12px rgba(23, 227, 166, 0.25);
-      transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .bar:hover {
-      transform: translateY(-2px);
-    }
-
-    .bar-label {
-      position: absolute;
-      bottom: -1px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 9px;
-      color: var(--muted);
-      font-weight: 500;
-    }
-
-    .auth {
-      max-width: 420px;
-      margin: 12px auto;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.04));
-      border: var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-2);
-      padding: 20px;
-      backdrop-filter: blur(12px);
-    }
-
-    @media (max-width: 600px) {
-      .auth {
-        margin: 8px auto;
-        padding: 16px;
-        max-width: 100%;
-      }
-    }
-
-    .tabs {
-      display: flex;
-      gap: 4px;
-      margin-bottom: 12px;
-    }
-
-    .tab {
-      flex: 1;
-      text-align: center;
-      padding: 10px 6px;
-      border-radius: 8px;
-      cursor: pointer;
-      border: var(--border);
-      font-weight: 600;
-      font-size: 12px;
-      transition: all .2s ease;
-      min-height: var(--touch-target);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .tab.active {
-      background: linear-gradient(135deg, var(--primary-2), var(--primary));
-      color: #fff;
-      border: none;
-      box-shadow: 0 3px 10px rgba(61, 217, 255, 0.25);
-    }
-
-    .toast {
-      position: fixed;
-      right: var(--mobile-pad);
-      top: calc(var(--header-h) + 8px);
-      padding: 10px 14px;
-      border-radius: 8px;
-      max-width: calc(100vw - 28px);
-      background: linear-gradient(135deg, var(--success), #02c0a0);
-      color: #051b15;
-      font-weight: 600;
-      font-size: 12px;
-      box-shadow: var(--shadow-1);
-      z-index: 60;
-      opacity: 0;
-      transform: translateY(-6px);
-      animation: toastIn .3s forwards;
-    }
-
-    @keyframes toastIn {
-      to {
-        opacity: 1;
-        transform: translateY(0)
-      }
-    }
-
-    .modal {
-      position: fixed;
-      inset: 0;
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(6px);
-      display: grid;
-      place-items: center;
-      z-index: 50;
-    }
-
-    .modal-card {
-      width: min(600px, 100%);
-      max-height: 85vh;
-      overflow: auto;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.04));
-      border: var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-2);
-      padding: 20px;
-      backdrop-filter: blur(12px);
-    }
-
-    @media (max-width: 600px) {
-      .modal-card {
-        padding: 16px;
-        max-width: 100%;
-      }
-    }
-
-    .date-range {
-      display: grid;
-      gap: var(--mobile-gap);
-      grid-template-columns: 1fr 1fr;
-      margin: 12px 0;
-    }
-
-    @media (max-width: 600px) {
-      .date-range {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .hidden {
-      display: none !important
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-
-      *,
-      *::before,
-      *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-
-    .btn:focus-visible,
-    .side-item:focus-visible,
-    .tab:focus-visible {
-      outline: 2px solid var(--primary-2);
-      outline-offset: 2px;
-    }
-
-    @supports (padding: max(0px)) {
-      header.appbar {
-        padding-left: max(var(--mobile-pad), env(safe-area-inset-left));
-        padding-right: max(var(--mobile-pad), env(safe-area-inset-right));
-      }
-
-      main {
-        padding-left: max(var(--mobile-pad), env(safe-area-inset-left));
-        padding-right: max(var(--mobile-pad), env(safe-area-inset-right));
-      }
-    }
-
-    .loading {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      border-top-color: #fff;
-      animation: spin 1s ease-in-out infinite;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    h2,
-    h3 {
-      font-weight: 700;
-      margin: 0;
-    }
-
-    h2 {
-      font-size: 18px;
-    }
-
-    h3 {
-      font-size: 14px;
-    }
-
-    @media (max-width: 600px) {
-      h2 {
-        font-size: 16px;
-      }
-
-      h3 {
-        font-size: 13px;
-      }
-    }
-
-     /* Apple-inspired Design System */
+    /* Apple-inspired Design System */
     :root {
       /* Typography Scale - SF Pro inspired */
       --font-system: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -1118,6 +296,51 @@
       margin-top: -2px;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-size: 0.875rem;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue-500) 0%, var(--purple-500) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      border: 2px solid transparent;
+    }
+
+    .user-avatar:hover {
+      transform: scale(1.05);
+      border-color: var(--blue-500);
+    }
+
+    .user-avatar.has-image {
+      background: none;
+      overflow: hidden;
+    }
+
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
     /* Menu Button (Mobile) */
     .menu-button {
       display: none;
@@ -1150,6 +373,7 @@
       border-right: 1px solid var(--border);
       padding: var(--space-6);
       overflow-y: auto;
+      position: relative;
     }
 
     @media (max-width: 1024px) {
@@ -1231,6 +455,16 @@
       align-items: center;
       justify-content: center;
       font-size: 1rem;
+    }
+
+    /* Profile section in sidebar */
+    .nav-profile-section {
+      position: absolute;
+      bottom: var(--space-6);
+      left: var(--space-6);
+      right: var(--space-6);
+      border-top: 1px solid var(--border);
+      padding-top: var(--space-4);
     }
 
     /* Main Content */
@@ -1380,6 +614,16 @@
       box-shadow: var(--shadow-md);
     }
 
+    .btn-danger {
+      background: linear-gradient(135deg, var(--red-500) 0%, var(--red-600) 100%);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
     /* Form Elements */
     .form-group {
       margin-bottom: var(--space-6);
@@ -1413,6 +657,35 @@
 
     .input::placeholder {
       color: var(--text-tertiary);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: var(--background-secondary);
+      border-radius: var(--radius-md);
+      padding: var(--space-1);
+      margin-bottom: var(--space-6);
+    }
+
+    .tab {
+      flex: 1;
+      padding: var(--space-3) var(--space-4);
+      text-align: center;
+      font-weight: 500;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      background: none;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tab.active {
+      background: white;
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
     }
 
     /* Stats */
@@ -1601,7 +874,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius-2xl);
       padding: var(--space-8);
-      max-width: 600px;
+      max-width: 500px;
       width: 100%;
       max-height: 80vh;
       overflow-y: auto;
@@ -1612,6 +885,63 @@
 
     .modal.active .modal-content {
       transform: scale(1);
+    }
+
+    /* Profile Modal Specific Styles */
+    .profile-section {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+      padding: var(--space-4);
+      background: var(--background-secondary);
+      border-radius: var(--radius-lg);
+    }
+
+    .profile-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue-500) 0%, var(--purple-500) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 1.25rem;
+      overflow: hidden;
+    }
+
+    .profile-avatar.has-image {
+      background: none;
+    }
+
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-info h3 {
+      margin-bottom: var(--space-1);
+    }
+
+    .profile-info p {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .cropper-container {
+      margin: var(--space-4) 0;
+      max-height: 300px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .profile-actions {
+      display: flex;
+      gap: var(--space-3);
+      margin-top: var(--space-6);
     }
 
     /* Toast */
@@ -1702,6 +1032,10 @@
       .grid {
         gap: var(--space-4);
       }
+
+      .modal-content {
+        padding: var(--space-6);
+      }
     }
 
     /* Reduced Motion */
@@ -1720,357 +1054,383 @@
 
 <body>
   <div class="app">
-    <!-- Enhanced Sidebar -->
-    <aside id="sidebar" class="sidebar">
-      <div class="side-section">
-        <div class="side-title">Navigation</div>
-        <div id="sideDashboard" class="side-item">
-          <div class="icon">🏠</div>
-          <div>Dashboard</div>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <nav>
+        <div class="nav-section">
+          <h3 class="nav-title">Navigation</h3>
+          <a href="#" class="nav-item active" id="nav-dashboard">
+            <span class="nav-icon">🏠</span>
+            Dashboard
+          </a>
+          <a href="#" class="nav-item" id="nav-setup">
+            <span class="nav-icon">⚙️</span>
+            Setup
+          </a>
         </div>
-        <div id="sideSetup" class="side-item">
-          <div class="icon">⚙️</div>
-          <div>Setup</div>
-        </div>
-        <div id="sideAccount" class="side-item">
-          <div class="icon">🔐</div>
-          <div>Account</div>
-        </div>
-      </div>
-      <div class="side-section">
-        <div class="side-title">Actions</div>
-        <div id="actHistory" class="side-item">
-          <div class="icon">🕑</div>
-          <div>History</div>
-        </div>
-        <div id="actPdfExport" class="side-item">
-          <div class="icon">📄</div>
-          <div>Export PDF</div>
-        </div>
-        <div id="actExport" class="side-item">
-          <div class="icon">💾</div>
-          <div>Export JSON</div>
-        </div>
-        <div id="actImport" class="side-item">
-          <div class="icon">📤</div>
-          <div>Import</div>
-        </div>
-        <div id="actReset" class="side-item">
-          <div class="icon">♻️</div>
-          <div>Reset</div>
-        </div>
-        <div id="actLogout" class="side-item">
-          <div class="icon">🚪</div>
-          <div>Logout</div>
-        </div>
-      </div>
-    </aside>
-    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
 
-    <!-- AppBar -->
-    <header class="appbar">
-      <button id="menuBtn" class="menu-btn">☰</button>
+        <div class="nav-section" id="nav-actions">
+          <h3 class="nav-title">Actions</h3>
+          <a href="#" class="nav-item" id="nav-history">
+            <span class="nav-icon">📊</span>
+            History
+          </a>
+          <a href="#" class="nav-item" id="nav-export-pdf">
+            <span class="nav-icon">📄</span>
+            Export PDF
+          </a>
+          <a href="#" class="nav-item" id="nav-export">
+            <span class="nav-icon">💾</span>
+            Export Data
+          </a>
+          <a href="#" class="nav-item" id="nav-import">
+            <span class="nav-icon">📁</span>
+            Import Data
+          </a>
+          <a href="#" class="nav-item" id="nav-reset">
+            <span class="nav-icon">♻️</span>
+            Reset Data
+          </a>
+        </div>
+
+        <div class="nav-section nav-profile-section" id="nav-profile-section">
+          <h3 class="nav-title">Profile</h3>
+          <a href="#" class="nav-item" id="sidebar-profile-btn">
+            <span class="nav-icon">👤</span>
+            Profile Settings
+          </a>
+          <a href="#" class="nav-item" id="nav-logout">
+            <span class="nav-icon">🚪</span>
+            Logout
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- Header -->
+    <header class="header">
+      <button class="menu-button" id="menu-button">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+            clip-rule="evenodd" />
+        </svg>
+        <span class="sr-only">Open menu</span>
+      </button>
+
       <div class="brand">
-        <div class="logo"></div>
-        <div class="title">
-          <h1>Backlog Tracker</h1>
-          <div class="sub">dream . work</div>
+        <div class="logo">📚</div>
+        <div>
+          <div class="brand-text">Backlog Tracker</div>
+          <div class="brand-subtitle">instant sync</div>
         </div>
       </div>
-      <div id="userBadge" class="muted" style="font-size:11px">Guest</div>
+
+      <div class="header-actions">
+        <!-- Login Button (shown when guest) -->
+        <button class="btn btn-primary" id="login-button">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="margin-right: 4px;">
+            <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+          </svg>
+          Login
+        </button>
+
+        <!-- User Avatar (shown when logged in) -->
+        <div class="user-info hidden" id="user-info">
+          <div class="user-avatar" id="user-avatar">G</div>
+        </div>
+      </div>
     </header>
 
-    <!-- Main -->
-    <main>
-      <!-- AUTH VIEW -->
-      <section id="authView" class="auth hidden">
-        <div class="tabs">
-          <div id="tabLogin" class="tab active">Login</div>
-          <div id="tabSignup" class="tab">Sign up</div>
-          <div id="tabReset" class="tab">Reset</div>
+    <!-- Auth Modal -->
+    <div class="modal" id="auth-modal">
+      <div class="modal-content">
+        <div style="margin-bottom: var(--space-6);">
+          <h2 class="text-2xl font-bold" style="margin-bottom: var(--space-2);">Welcome</h2>
+          <p class="text-base" style="color: var(--text-secondary);">
+            Sign in to sync your progress across devices
+          </p>
         </div>
 
-        <div id="authLogin">
-          <div class="field">
-            <label for="loginEmail">Email</label>
-            <input id="loginEmail" type="email" placeholder="name@email.com" autocomplete="username">
-          </div>
-          <div class="field">
-            <label for="loginPassword">Password</label>
-            <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password">
-          </div>
-          <button id="btnLogin" class="btn btn-primary" style="width:100%">Login</button>
+        <div class="tabs" id="auth-tabs">
+          <button class="tab active" data-tab="login">Sign In</button>
+          <button class="tab" data-tab="signup">Sign Up</button>
+          <button class="tab" data-tab="reset">Reset</button>
         </div>
 
-        <div id="authSignup" class="hidden">
-          <div class="field">
-            <label for="signupName">Name (optional)</label>
-            <input id="signupName" type="text" placeholder="Your name">
+        <!-- Login Tab -->
+        <div id="login-tab" class="tab-content">
+          <div class="form-group">
+            <label class="label" for="login-email">Email</label>
+            <input type="email" id="login-email" class="input" placeholder="your@email.com" autocomplete="username">
           </div>
-          <div class="field">
-            <label for="signupEmail">Email</label>
-            <input id="signupEmail" type="email" placeholder="name@email.com" autocomplete="email">
+
+          <div class="form-group">
+            <label class="label" for="login-password">Password</label>
+            <input type="password" id="login-password" class="input" placeholder="••••••••"
+              autocomplete="current-password">
           </div>
-          <div class="field">
-            <label for="signupPassword">Password</label>
-            <input id="signupPassword" type="password" placeholder="Minimum 6 characters" autocomplete="new-password">
-          </div>
-          <button id="btnSignup" class="btn btn-primary" style="width:100%">Create account</button>
+
+          <button class="btn btn-primary" id="login-submit" style="width: 100%; margin-bottom: var(--space-4);">
+            <span id="login-text">Sign In</span>
+            <span class="loading hidden" id="login-loading"></span>
+          </button>
+
+          <button class="btn btn-secondary" id="close-auth-modal" style="width: 100%;">
+            Continue as Guest
+          </button>
         </div>
 
-        <div id="authReset" class="hidden">
-          <div class="field">
-            <label for="resetEmail">Email</label>
-            <input id="resetEmail" type="email" placeholder="name@email.com" autocomplete="email">
+        <!-- Signup Tab -->
+        <div id="signup-tab" class="tab-content hidden">
+          <div class="form-group">
+            <label class="label" for="signup-name">Name (optional)</label>
+            <input type="text" id="signup-name" class="input" placeholder="Your full name">
           </div>
-          <button id="btnSendReset" class="btn btn-primary" style="width:100%">Send password reset link</button>
-        </div>
-      </section>
 
-      <!-- SETUP VIEW -->
-      <section id="setupView" class="card hidden">
-        <h2 style="margin:0 0 6px;">First-time Setup</h2>
-        <p class="muted" style="margin-top:0; font-size:12px;">Enter initial backlog once; synced when signed in.</p>
+          <div class="form-group">
+            <label class="label" for="signup-email">Email</label>
+            <input type="email" id="signup-email" class="input" placeholder="your@email.com" autocomplete="username">
+          </div>
+
+          <div class="form-group">
+            <label class="label" for="signup-password">Password</label>
+            <input type="password" id="signup-password" class="input" placeholder="At least 6 characters"
+              autocomplete="new-password">
+          </div>
+
+          <button class="btn btn-primary" id="signup-submit" style="width: 100%; margin-bottom: var(--space-4);">
+            <span id="signup-text">Create Account</span>
+            <span class="loading hidden" id="signup-loading"></span>
+          </button>
+
+          <button class="btn btn-secondary" id="close-auth-modal-2" style="width: 100%;">
+            Continue as Guest
+          </button>
+        </div>
+
+        <!-- Reset Tab -->
+        <div id="reset-tab" class="tab-content hidden">
+          <div class="form-group">
+            <label class="label" for="reset-email">Email</label>
+            <input type="email" id="reset-email" class="input" placeholder="your@email.com" autocomplete="username">
+          </div>
+
+          <button class="btn btn-primary" id="reset-submit" style="width: 100%; margin-bottom: var(--space-4);">
+            <span id="reset-text">Send Reset Link</span>
+            <span class="loading hidden" id="reset-loading"></span>
+          </button>
+
+          <button class="btn btn-secondary" id="close-auth-modal-3" style="width: 100%;">
+            Continue as Guest
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal" id="profile-modal">
+      <div class="modal-content">
+        <h2 class="text-2xl font-bold" style="margin-bottom: var(--space-6);">Profile Settings</h2>
+        
+        <!-- Profile Section -->
+        <div class="profile-section">
+          <div class="profile-avatar" id="profile-modal-avatar">G</div>
+          <div class="profile-info">
+            <h3 class="text-lg font-semibold" id="profile-name">Guest User</h3>
+            <p id="profile-email">guest@example.com</p>
+            <p id="profile-joined">Joined: Today</p>
+          </div>
+        </div>
+
+        <!-- Profile Picture Upload -->
+        <div class="form-group">
+          <label class="label">Profile Picture</label>
+          <input type="file" id="profile-picture-input" class="input" accept="image/*">
+          <div id="cropper-container" class="cropper-container hidden">
+            <img id="cropper-image" style="max-width: 100%;">
+          </div>
+        </div>
+
+        <!-- Profile Actions -->
+        <div class="profile-actions">
+          <button class="btn btn-primary hidden" id="save-profile-picture">Save Picture</button>
+          <button class="btn btn-danger" id="profile-logout-btn">Log Out</button>
+          <button class="btn btn-secondary" id="close-profile-modal">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Setup Modal -->
+    <div class="modal" id="setup-modal">
+      <div class="modal-content">
+        <div style="margin-bottom: var(--space-6);">
+          <h2 class="text-2xl font-bold" style="margin-bottom: var(--space-2);">Setup</h2>
+          <p class="text-base" style="color: var(--text-secondary);">
+            Let's get you started with tracking your lecture backlog
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="label" for="setup-name">Your Name (optional)</label>
+          <input type="text" id="setup-name" class="input" placeholder="Enter your name">
+        </div>
+
+        <div class="form-group">
+          <label class="label" for="setup-initial">Initial Backlog Count</label>
+          <input type="number" id="setup-initial" class="input" placeholder="How many lectures are you behind?" min="0">
+        </div>
+
+        <button class="btn btn-success" id="complete-setup" style="width: 100%;">
+          Start Tracking
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Dashboard -->
+      <section id="dashboard-view" class="animate-in">
+        <div style="margin-bottom: var(--space-8);">
+          <h1 class="text-3xl font-bold" style="margin-bottom: var(--space-2);">Dashboard</h1>
+          <p class="text-lg" style="color: var(--text-secondary);" id="welcome-message">
+            Welcome back! Track your lecture progress with precision.
+          </p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid" style="margin-bottom: var(--space-8);">
+          <div class="col-span-3">
+            <div class="surface">
+              <div class="stat">
+                <div class="stat-icon">📚</div>
+                <div class="stat-content">
+                  <div class="stat-label">Total Backlogs</div>
+                  <div class="stat-value" id="stat-total">0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-span-3">
+            <div class="surface">
+              <div class="stat">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                  <div class="stat-label">Completed</div>
+                  <div class="stat-value" id="stat-completed">0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-span-3">
+            <div class="surface">
+              <div class="stat">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-content">
+                  <div class="stat-label">Remaining</div>
+                  <div class="stat-value" id="stat-remaining">0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-span-3">
+            <div class="surface">
+              <div class="stat">
+                <div class="stat-icon">📈</div>
+                <div class="stat-content">
+                  <div class="stat-label">Daily Average</div>
+                  <div class="stat-value" id="stat-average">0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Section -->
         <div class="grid">
-          <div class="col-6">
-            <div class="surface">
-              <div class="stat">
-                <div class="icon">👤</div>
-                <div>
-                  <div class="label">Name</div>
-                  <div class="value" id="namePreview">—</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="surface">
-              <div class="stat">
-                <div class="icon">📚</div>
-                <div>
-                  <div class="label">Initial Backlogs</div>
-                  <div class="value" id="initialPreview">0</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-12">
-            <div class="grid">
-              <div class="col-6">
-                <div class="field">
-                  <label for="setupName">Your Name (optional)</label>
-                  <input id="setupName" type="text" placeholder="Enter your name">
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="field">
-                  <label for="setupInitial">How many backlog lectures?</label>
-                  <input id="setupInitial" type="number" min="0" placeholder="e.g., 40">
-                </div>
-              </div>
-            </div>
-            <div class="center">
-              <button id="btnStart" class="btn btn-success">Start Tracking</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- DASHBOARD -->
-      <section id="dashboard" class="card hidden">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-          <div>
-            <h2 style="margin:0 0 4px;">Overview</h2>
-            <p class="muted" style="margin-top:0; font-size:12px;" id="welcomeName">Welcome</p>
-          </div>
-        </div>
-
-        <div class="grid" style="margin-top:10px">
-          <div class="col-3 col-6">
-            <div class="surface">
-              <div class="stat">
-                <div class="icon">📚</div>
-                <div>
-                  <div class="label">Total</div>
-                  <div class="value" id="statTotal">0</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-3 col-6">
-            <div class="surface">
-              <div class="stat">
-                <div class="icon">✅</div>
-                <div>
-                  <div class="label">Completed</div>
-                  <div class="value" id="statCompleted">0</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-3 col-6">
-            <div class="surface">
-              <div class="stat">
-                <div class="icon">⏳</div>
-                <div>
-                  <div class="label">Remaining</div>
-                  <div class="value" id="statRemaining">0</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-3 col-6">
-            <div class="surface">
-              <div class="stat">
-                <div class="icon">📈</div>
-                <div>
-                  <div class="label">Daily Avg</div>
-                  <div class="value" id="statAvg">0</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-8">
-            <div class="surface">
+          <div class="col-span-8">
+            <div class="card">
               <div class="progress-header">
-                <h3>Overall Progress</h3>
-                <strong id="progressText">0%</strong>
+                <h3 class="text-xl font-semibold">Overall Progress</h3>
+                <span class="text-2xl font-bold" id="progress-percentage">0%</span>
               </div>
-              <div class="progressbar">
-                <div id="linearFill" class="fill"></div>
+
+              <div class="progress-bar" style="margin-bottom: var(--space-8);">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
               </div>
-              <div class="circle-wrap">
-                <div class="circular">
-                  <svg viewBox="0 0 130 130">
+
+              <div style="display: flex; justify-content: center;">
+                <div class="circular-progress">
+                  <svg viewBox="0 0 160 160">
                     <defs>
-                      <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="#10d7a3" />
-                        <stop offset="100%" stop-color="#3dd9ff" />
+                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color: var(--green-500)" />
+                        <stop offset="100%" style="stop-color: var(--blue-500)" />
                       </linearGradient>
                     </defs>
-                    <circle class="bg" cx="65" cy="65" r="60"></circle>
-                    <circle id="circleFG" class="fg" cx="65" cy="65" r="60"></circle>
+                    <circle class="progress-circle progress-bg" cx="80" cy="80" r="70"></circle>
+                    <circle class="progress-circle progress-fg" cx="80" cy="80" r="70" id="circular-progress"></circle>
                   </svg>
-                  <div class="circle-text" id="circlePct">0%</div>
+                  <div class="progress-text" id="circular-progress-text">0%</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="col-4">
-            <div class="surface">
-              <h3 style="margin:0 0 10px;">Quick Log</h3>
-              <div class="grid">
-                <div class="col-12">
-                  <div class="field">
-                    <label for="logDate">Date</label>
-                    <input id="logDate" type="date">
-                  </div>
-                </div>
-                <div class="col-6">
-                  <div class="field">
-                    <label for="logCompleted">Completed</label>
-                    <input id="logCompleted" type="number" min="0" placeholder="0">
-                  </div>
-                </div>
-                <div class="col-6">
-                  <div class="field">
-                    <label for="logNew">New Added</label>
-                    <input id="logNew" type="number" min="0" placeholder="0">
-                  </div>
-                </div>
+          <div class="col-span-4">
+            <div class="card">
+              <h3 class="text-xl font-semibold" style="margin-bottom: var(--space-6);">Quick Log</h3>
+
+              <div class="form-group">
+                <label class="label" for="log-date">Date</label>
+                <input type="date" id="log-date" class="input">
               </div>
-              <div class="center">
-                <button id="btnSave" class="btn btn-success">Save</button>
-                <button id="btnToday" class="btn btn-ghost">Today</button>
+
+              <div class="form-group">
+                <label class="label" for="lectures-completed">Lectures Completed</label>
+                <input type="number" id="lectures-completed" class="input" placeholder="0" min="0">
               </div>
-              <small class="muted" style="font-size:10px;">Re-saving the same date overwrites that day.</small>
+
+              <div class="form-group">
+                <label class="label" for="new-lectures">New Lectures Added</label>
+                <input type="number" id="new-lectures" class="input" placeholder="0" min="0">
+              </div>
+
+              <div style="display: flex; gap: var(--space-3); margin-bottom: var(--space-4);">
+                <button class="btn btn-primary" id="save-entry">Save Entry</button>
+                <button class="btn btn-secondary" id="set-today">Today</button>
+              </div>
+
+              <p class="text-sm" style="color: var(--text-secondary);">
+                Entries for the same date will be updated.
+              </p>
             </div>
           </div>
+        </div>
 
-          <div class="col-12">
-            <div class="surface">
-              <div
-                style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
-                <h3>Weekly Progress</h3>
-                <span class="muted" id="weeklyHint" style="font-size:10px;">—</span>
-              </div>
-              <div class="mini-chart" id="weeklyChart">
-                <div class="gridlines"></div>
-              </div>
-            </div>
+        <!-- Weekly Chart -->
+        <div class="card">
+          <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6);">
+            <h3 class="text-xl font-semibold">Weekly Progress</h3>
+            <span class="text-sm" style="color: var(--text-secondary);" id="chart-range">Last 7 entries</span>
+          </div>
+
+          <div class="chart" id="weekly-chart">
+            <div class="chart-gridlines"></div>
           </div>
         </div>
       </section>
-
-      <!-- History Modal -->
-      <div id="historyModal" class="modal hidden">
-        <div class="modal-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
-            <h3>Progress History</h3>
-            <button id="closeHistory" class="btn btn-ghost">Close</button>
-          </div>
-          <div id="historyList" style="margin-top:12px;display:grid;gap:8px"></div>
-        </div>
-      </div>
-
-      <!-- PDF Export Modal -->
-      <div id="pdfExportModal" class="modal hidden">
-        <div class="modal-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
-            <h3>📄 Export PDF Report</h3>
-            <button id="closePdfExport" class="btn btn-ghost">Close</button>
-          </div>
-
-          <div style="margin-top:16px;">
-            <div class="field">
-              <label>Select Date Range</label>
-              <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
-                <button id="btnAllTime" class="btn btn-primary">All Time</button>
-                <button id="btnLast30" class="btn btn-ghost">Last 30 Days</button>
-                <button id="btnCustomRange" class="btn btn-ghost">Custom Range</button>
-              </div>
-            </div>
-
-            <div id="customDateRange" class="hidden">
-              <div class="date-range">
-                <div class="field">
-                  <label for="pdfStartDate">Start Date</label>
-                  <input id="pdfStartDate" type="date">
-                </div>
-                <div class="field">
-                  <label for="pdfEndDate">End Date</label>
-                  <input id="pdfEndDate" type="date">
-                </div>
-              </div>
-            </div>
-
-            <div id="pdfSummary"
-              style="margin:12px 0;padding:12px;background:rgba(255,255,255,0.05);border-radius:10px;border:var(--border);display:none;">
-              <h3 style="margin:0 0 6px;font-size:12px;">Report Summary</h3>
-              <div style="display:grid;gap:6px;font-size:11px;">
-                <div>📅 Date Range: <span id="summaryDateRange">—</span></div>
-                <div>📊 Total Days: <span id="summaryTotalDays">—</span></div>
-                <div>✅ Days with Reports: <span id="summaryReportDays">—</span></div>
-                <div>📈 Total Completed: <span id="summaryTotalCompleted">—</span></div>
-              </div>
-            </div>
-
-            <div class="center" style="margin-top:20px;">
-              <button id="btnGeneratePdf" class="btn btn-success" disabled>
-                <span id="pdfBtnText">Generate PDF</span>
-                <span id="pdfLoader" class="loading hidden" style="margin-left:6px;"></span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
     </main>
   </div>
 
   <script>
-    // Firebase config
+    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyCYY2GQqS0tCXb7Oxw8AWXhpexq9e8VRUs",
       authDomain: "aspirehub-32863.firebaseapp.com",
@@ -2081,85 +1441,78 @@
       measurementId: "G-KX41R0SSMY",
       databaseURL: "https://aspirehub-32863-default-rtdb.asia-southeast1.firebasedatabase.app"
     };
+
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-    db.enablePersistence({ synchronizeTabs: true }).catch(() => { });
 
-    // Elements
+    // Enable offline persistence
+    db.enablePersistence({ synchronizeTabs: true }).catch(() => {
+      console.log('Persistence failed');
+    });
+
+    // App state
+    let currentUser = null;
+    let appData = {
+      userName: '',
+      initialBacklogs: 0,
+      dailyEntries: [],
+      totalCompleted: 0,
+      setupComplete: false,
+      profilePicture: null,
+      updatedAt: null
+    };
+
+    // Cropper instance
+    let cropper = null;
+
+    // DOM elements
+    const menuButton = document.getElementById('menu-button');
     const sidebar = document.getElementById('sidebar');
-    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
-    const menuBtn = document.getElementById('menuBtn');
-    const userBadge = document.getElementById('userBadge');
-    const sideDashboard = document.getElementById('sideDashboard');
-    const sideSetup = document.getElementById('sideSetup');
-    const sideAccount = document.getElementById('sideAccount');
-    const actHistory = document.getElementById('actHistory');
-    const actPdfExport = document.getElementById('actPdfExport');
-    const actExport = document.getElementById('actExport');
-    const actImport = document.getElementById('actImport');
-    const actReset = document.getElementById('actReset');
-    const actLogout = document.getElementById('actLogout');
-    const authView = document.getElementById('authView');
-    const setupView = document.getElementById('setupView');
-    const dashboard = document.getElementById('dashboard');
-    const tabLogin = document.getElementById('tabLogin');
-    const tabSignup = document.getElementById('tabSignup');
-    const tabReset = document.getElementById('tabReset');
-    const authLogin = document.getElementById('authLogin');
-    const authSignup = document.getElementById('authSignup');
-    const authReset = document.getElementById('authReset');
-    const loginEmail = document.getElementById('loginEmail');
-    const loginPassword = document.getElementById('loginPassword');
-    const btnLogin = document.getElementById('btnLogin');
-    const signupName = document.getElementById('signupName');
-    const signupEmail = document.getElementById('signupEmail');
-    const signupPassword = document.getElementById('signupPassword');
-    const btnSignup = document.getElementById('btnSignup');
-    const resetEmail = document.getElementById('resetEmail');
-    const btnSendReset = document.getElementById('btnSendReset');
-    const namePreview = document.getElementById('namePreview');
-    const initialPreview = document.getElementById('initialPreview');
-    const setupName = document.getElementById('setupName');
-    const setupInitial = document.getElementById('setupInitial');
-    const btnStart = document.getElementById('btnStart');
-    const welcomeName = document.getElementById('welcomeName');
-    const statTotal = document.getElementById('statTotal');
-    const statCompleted = document.getElementById('statCompleted');
-    const statRemaining = document.getElementById('statRemaining');
-    const statAvg = document.getElementById('statAvg');
-    const progressText = document.getElementById('progressText');
-    const linearFill = document.getElementById('linearFill');
-    const circleFG = document.getElementById('circleFG');
-    const circlePct = document.getElementById('circlePct');
-    const logDate = document.getElementById('logDate');
-    const logCompleted = document.getElementById('logCompleted');
-    const logNew = document.getElementById('logNew');
-    const btnSave = document.getElementById('btnSave');
-    const btnToday = document.getElementById('btnToday');
-    const weeklyChart = document.getElementById('weeklyChart');
-    const weeklyHint = document.getElementById('weeklyHint');
-    const historyModal = document.getElementById('historyModal');
-    const historyList = document.getElementById('historyList');
-    const closeHistory = document.getElementById('closeHistory');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const loginButton = document.getElementById('login-button');
+    const userInfo = document.getElementById('user-info');
+    const userAvatar = document.getElementById('user-avatar');
+    const welcomeMessage = document.getElementById('welcome-message');
 
-    // PDF Export Elements
-    const pdfExportModal = document.getElementById('pdfExportModal');
-    const closePdfExport = document.getElementById('closePdfExport');
-    const btnAllTime = document.getElementById('btnAllTime');
-    const btnLast30 = document.getElementById('btnLast30');
-    const btnCustomRange = document.getElementById('btnCustomRange');
-    const customDateRange = document.getElementById('customDateRange');
-    const pdfStartDate = document.getElementById('pdfStartDate');
-    const pdfEndDate = document.getElementById('pdfEndDate');
-    const pdfSummary = document.getElementById('pdfSummary');
-    const summaryDateRange = document.getElementById('summaryDateRange');
-    const summaryTotalDays = document.getElementById('summaryTotalDays');
-    const summaryReportDays = document.getElementById('summaryReportDays');
-    const summaryTotalCompleted = document.getElementById('summaryTotalCompleted');
-    const btnGeneratePdf = document.getElementById('btnGeneratePdf');
-    const pdfBtnText = document.getElementById('pdfBtnText');
-    const pdfLoader = document.getElementById('pdfLoader');
+    // Auth modal elements
+    const authModal = document.getElementById('auth-modal');
+    const authTabs = document.getElementById('auth-tabs');
+    const loginTab = document.getElementById('login-tab');
+    const signupTab = document.getElementById('signup-tab');
+    const resetTab = document.getElementById('reset-tab');
+
+    // Profile modal elements
+    const profileModal = document.getElementById('profile-modal');
+    const profileModalAvatar = document.getElementById('profile-modal-avatar');
+    const profileName = document.getElementById('profile-name');
+    const profileEmail = document.getElementById('profile-email');
+    const profileJoined = document.getElementById('profile-joined');
+    const profilePictureInput = document.getElementById('profile-picture-input');
+    const cropperContainer = document.getElementById('cropper-container');
+    const cropperImage = document.getElementById('cropper-image');
+    const saveProfilePictureBtn = document.getElementById('save-profile-picture');
+    const profileLogoutBtn = document.getElementById('profile-logout-btn');
+    const closeProfileModalBtn = document.getElementById('close-profile-modal');
+
+    // Setup modal elements
+    const setupModal = document.getElementById('setup-modal');
+    const setupName = document.getElementById('setup-name');
+    const setupInitial = document.getElementById('setup-initial');
+    const completeSetupBtn = document.getElementById('complete-setup');
+
+    // Form elements
+    const logDate = document.getElementById('log-date');
+    const lecturesCompleted = document.getElementById('lectures-completed');
+    const newLectures = document.getElementById('new-lectures');
+    const saveEntryBtn = document.getElementById('save-entry');
+    const setTodayBtn = document.getElementById('set-today');
+
+    // Navigation elements
+    const navActions = document.getElementById('nav-actions');
+    const navProfileSection = document.getElementById('nav-profile-section');
+    const sidebarProfileBtn = document.getElementById('sidebar-profile-btn');
 
     // Utility functions
     function safeString(val, fallback = '') {
@@ -2172,687 +1525,649 @@
       return isNaN(num) ? fallback : num;
     }
 
-    // Sidebar interactions with persistence
-    const UI_KEY = 'lb_ui_state';
-    function loadUIState() {
-      try { return JSON.parse(localStorage.getItem(UI_KEY) || '{}'); } catch { return {}; }
-    }
-    function saveUIState(patch) {
-      const cur = loadUIState();
-      localStorage.setItem(UI_KEY, JSON.stringify({ ...cur, ...patch }));
-    }
-    function isMobile() { return window.matchMedia('(max-width: 960px)').matches; }
-    function openSidebar() {
-      sidebar.classList.add('open');
-      sidebarBackdrop.classList.add('show');
-      saveUIState({ sidebarOpen: true });
-    }
-    function closeSidebar() {
-      sidebar.classList.remove('open');
-      sidebarBackdrop.classList.remove('show');
-      saveUIState({ sidebarOpen: false });
-    }
-    menuBtn.onclick = openSidebar;
-    sidebarBackdrop.onclick = closeSidebar;
-    sideDashboard.onclick = () => { showDashboard(); closeSidebar(); };
-    sideSetup.onclick = () => { showSetup(); closeSidebar(); };
-    sideAccount.onclick = () => { toggleAuthView(true); closeSidebar(); };
+    function toast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
 
-    function toast(msg) {
-      const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
-      document.body.appendChild(t); setTimeout(() => t.remove(), 2600);
+      if (type === 'error') {
+        toast.style.background = 'var(--red-500)';
+        toast.style.color = 'white';
+      } else if (type === 'success') {
+        toast.style.background = 'var(--green-500)';
+        toast.style.color = 'white';
+      }
+
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
     }
 
-    function setTab(which) {
-      [tabLogin, tabSignup, tabReset].forEach(t => t.classList.remove('active'));
-      [authLogin, authSignup, authReset].forEach(v => v.classList.add('hidden'));
-      if (which === 'login') { tabLogin.classList.add('active'); authLogin.classList.remove('hidden'); }
-      if (which === 'signup') { tabSignup.classList.add('active'); authSignup.classList.remove('hidden'); }
-      if (which === 'reset') { tabReset.classList.add('active'); authReset.classList.remove('hidden'); }
-      saveUIState({ authTab: which });
+    function formatDate(date) {
+      return new Date(date).toISOString().split('T')[0];
     }
-    tabLogin.onclick = () => setTab('login');
-    tabSignup.onclick = () => setTab('signup');
-    tabReset.onclick = () => setTab('reset');
-
-    const keyFor = (uid) => `lectureBacklog_${uid || 'guest'}`;
-    function loadLocal(uid) { try { return JSON.parse(localStorage.getItem(keyFor(uid)) || 'null'); } catch { return null; } }
-    function saveLocal(uid, data) { localStorage.setItem(keyFor(uid), JSON.stringify(data)); }
-
-    let currentUid = null;
-    let state = {
-      userName: '', initialBacklogs: 0, dailyEntries: [], totalCompleted: 0, setupComplete: false, updatedAt: null
-    };
 
     function setToday() {
-      const iso = new Date().toISOString().slice(0, 10);
-      logDate.value = iso;
-      saveUIState({ lastDate: iso });
-    }
-    function restoreLastDate() {
-      const u = loadUIState();
-      if (u.lastDate) logDate.value = u.lastDate; else setToday();
+      logDate.value = formatDate(new Date());
     }
 
-    function sortEntries() {
-      if (state.dailyEntries && Array.isArray(state.dailyEntries)) {
-        state.dailyEntries.sort((a, b) => a.date.localeCompare(b.date));
+    function getStorageKey() {
+      return currentUser ? `lectureBacklog_${currentUser.uid}` : 'lectureBacklog_guest';
+    }
+
+    function getUserDisplayName() {
+      if (currentUser && appData.userName) {
+        return appData.userName;
+      } else if (currentUser && currentUser.email) {
+        return currentUser.email.split('@')[0];
+      }
+      return 'Guest';
+    }
+
+    function updateUserAvatar() {
+      const displayName = getUserDisplayName();
+      const firstLetter = displayName.charAt(0).toUpperCase();
+      
+      // Update header avatar
+      if (appData.profilePicture) {
+        userAvatar.innerHTML = `<img src="${appData.profilePicture}" alt="Profile">`;
+        userAvatar.classList.add('has-image');
+      } else {
+        userAvatar.textContent = firstLetter;
+        userAvatar.classList.remove('has-image');
+      }
+
+      // Update profile modal avatar
+      if (appData.profilePicture) {
+        profileModalAvatar.innerHTML = `<img src="${appData.profilePicture}" alt="Profile">`;
+        profileModalAvatar.classList.add('has-image');
+      } else {
+        profileModalAvatar.textContent = firstLetter;
+        profileModalAvatar.classList.remove('has-image');
       }
     }
 
-    function computeStats() {
-      const totalNew = (state.dailyEntries || []).reduce((a, e) => a + (+e.newLectures || 0), 0);
-      const currentTotal = (+state.initialBacklogs || 0) + totalNew;
-      const completed = (state.dailyEntries || []).reduce((a, e) => a + (+e.completed || 0), 0);
-      const remaining = Math.max(0, currentTotal - completed);
-      const pct = currentTotal > 0 ? Math.min(100, Math.round((completed / currentTotal) * 100)) : 0;
-      const avg = state.dailyEntries?.length > 0 ? (completed / state.dailyEntries.length) : 0;
-      state.totalCompleted = completed;
+    function updateProfileModal() {
+      const displayName = getUserDisplayName();
+      const email = currentUser ? currentUser.email : 'guest@example.com';
+      const joinedDate = currentUser && currentUser.metadata.creationTime 
+        ? new Date(currentUser.metadata.creationTime).toLocaleDateString()
+        : 'Today';
 
-      statTotal.textContent = currentTotal;
-      statCompleted.textContent = completed;
-      statRemaining.textContent = remaining;
-      statAvg.textContent = avg.toFixed(1);
-
-      progressText.textContent = pct + '%';
-      linearFill.style.width = pct + '%';
-
-      // Adjusted for mobile circular progress (r=60)
-      const circumference = 2 * Math.PI * 60;
-      const offset = circumference - (pct / 100) * circumference;
-      circleFG.style.strokeDashoffset = offset;
-      circlePct.textContent = pct + '%';
+      profileName.textContent = displayName;
+      profileEmail.textContent = email;
+      profileJoined.textContent = `Joined: ${joinedDate}`;
+      
+      updateUserAvatar();
     }
 
-    function renderWeekly() {
-      weeklyChart.querySelectorAll('.bar,.bar-label').forEach(n => n.remove());
-      const last7 = (state.dailyEntries || []).slice(-7);
-      weeklyHint.textContent = last7.length > 0 ? `${last7[0].date} → ${last7[last7.length - 1].date}` : 'No entries yet';
-      if (!last7.length) return;
+    // Initialize app
+    function initializeApp() {
+      setToday();
+      loadLocalData();
+      updateUI();
+      setupEventListeners();
 
-      const maxVal = Math.max(1, ...last7.map(e => +e.completed || 0));
-      const W = weeklyChart.clientWidth, pad = 12, gap = 6;
-      const barW = Math.max(10, Math.min(30, (W - 2 * pad - (last7.length - 1) * gap) / last7.length));
+      // Check if setup is needed
+      if (!appData.setupComplete) {
+        showSetupModal();
+      }
+    }
 
-      last7.forEach((e, i) => {
-        const hPct = (+e.completed || 0) / maxVal;
-        const bar = document.createElement('div');
-        bar.className = 'bar';
-        bar.style.left = (pad + i * (barW + gap)) + 'px';
-        bar.style.width = barW + 'px';
-        bar.style.height = (Math.round(hPct * 110) + 8) + 'px';
-        bar.title = `${e.date} - ${e.completed} done`;
-        weeklyChart.appendChild(bar);
+    function setupEventListeners() {
+      // Mobile menu
+      menuButton.addEventListener('click', toggleSidebar);
+      sidebarOverlay.addEventListener('click', closeSidebar);
 
-        const lbl = document.createElement('div');
-        lbl.className = 'bar-label';
-        lbl.style.left = (pad + i * (barW + gap) + barW / 2) + 'px';
-        lbl.textContent = e.date.slice(5);
-        weeklyChart.appendChild(lbl);
+      // Login button
+      loginButton.addEventListener('click', showAuthModal);
+
+      // Profile buttons
+      userAvatar.addEventListener('click', showProfileModal);
+      sidebarProfileBtn.addEventListener('click', showProfileModal);
+      closeProfileModalBtn.addEventListener('click', closeProfileModal);
+      profileLogoutBtn.addEventListener('click', logout);
+
+      // Profile picture upload
+      profilePictureInput.addEventListener('change', handleProfilePictureUpload);
+      saveProfilePictureBtn.addEventListener('click', saveProfilePicture);
+
+      // Auth modal tabs
+      authTabs.addEventListener('click', handleAuthTabClick);
+
+      // Auth form submissions
+      document.getElementById('login-submit').addEventListener('click', handleLogin);
+      document.getElementById('signup-submit').addEventListener('click', handleSignup);
+      document.getElementById('reset-submit').addEventListener('click', handlePasswordReset);
+
+      // Close auth modal buttons
+      document.getElementById('close-auth-modal').addEventListener('click', closeAuthModal);
+      document.getElementById('close-auth-modal-2').addEventListener('click', closeAuthModal);
+      document.getElementById('close-auth-modal-3').addEventListener('click', closeAuthModal);
+
+      // Setup
+      completeSetupBtn.addEventListener('click', completeSetup);
+
+      // Quick log
+      setTodayBtn.addEventListener('click', setToday);
+      saveEntryBtn.addEventListener('click', saveEntry);
+
+      // Navigation
+      document.getElementById('nav-logout').addEventListener('click', logout);
+
+      // Auth state listener
+      auth.onAuthStateChanged(handleAuthStateChange);
+
+      // Enter key submissions
+      document.getElementById('login-password').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleLogin();
+      });
+      document.getElementById('signup-password').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleSignup();
+      });
+      document.getElementById('reset-email').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handlePasswordReset();
       });
     }
 
-    function refreshAll() {
-      computeStats();
-      renderWeekly();
-      state.updatedAt = new Date().toISOString();
-      saveLocal(currentUid, state);
-    }
+    // Profile picture handling
+    function handleProfilePictureUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
 
-    const docRef = uid => db.collection('lecture_backlogs').doc(uid);
-    async function pullRemote(uid) { const s = await docRef(uid).get(); return s.exists ? s.data() : null; }
-    async function pushRemote(uid) { if (uid) await docRef(uid).set(state, { merge: true }); }
-    function mergeByUpdatedAt(localData, remoteData) {
-      if (!localData && !remoteData) return null;
-      if (localData && !remoteData) return localData;
-      if (!localData && remoteData) return remoteData;
-      return (remoteData.updatedAt && (!localData.updatedAt || new Date(remoteData.updatedAt) > new Date(localData.updatedAt))) ? remoteData : localData;
-    }
-
-    function showAuth(want) {
-      authView.classList.toggle('hidden', !want);
-      if (want) { const uis = loadUIState(); setTab(uis.authTab || 'login'); }
-    }
-    function showSetup() { authView.classList.add('hidden'); setupView.classList.remove('hidden'); dashboard.classList.add('hidden'); }
-    function showDashboard() { authView.classList.add('hidden'); setupView.classList.add('hidden'); dashboard.classList.remove('hidden'); }
-
-    function applyUI() {
-      const email = auth.currentUser?.email;
-      userBadge.textContent = email || (currentUid ? 'Signed in' : 'Guest');
-      welcomeName.textContent = `Welcome${state.userName ? ', ' + state.userName : ''}`;
-      namePreview.textContent = state.userName || (email ? email.split('@')[0] : '—');
-      initialPreview.textContent = state.initialBacklogs || 0;
-      if (!logDate.value) restoreLastDate();
-    }
-
-    function instantResume() {
-      const uis = loadUIState();
-      currentUid = uis.lastUid || null;
-      const local = loadLocal(currentUid);
-      if (local) {
-        state = local;
-      } else {
-        state = { userName: 'Student', initialBacklogs: 0, dailyEntries: [], totalCompleted: 0, setupComplete: false, updatedAt: new Date().toISOString() };
-      }
-      applyUI();
-      refreshAll();
-
-      if (!state.setupComplete) { showSetup(); } else { showDashboard(); }
-      if (!isMobile() && uis.sidebarOpen) sidebar.classList.add('open');
-
-      firebase.auth().onAuthStateChanged(async (user) => {
-        const prevUid = currentUid;
-        currentUid = user ? user.uid : null;
-
-        if (user) {
-          userBadge.textContent = user.email || 'Signed in';
-          saveUIState({ lastUid: currentUid });
-          try {
-            const remote = await pullRemote(currentUid);
-            const localForUser = loadLocal(currentUid);
-            const merged = mergeByUpdatedAt(localForUser, remote);
-            if (merged) {
-              state = merged;
-            } else if (prevUid === null && state.dailyEntries?.length > 0) {
-              await pushRemote(currentUid);
-            }
-            applyUI();
-            refreshAll();
-            if (!state.setupComplete) showSetup(); else showDashboard();
-          } catch (_) { }
-        } else {
-          currentUid = null;
-          userBadge.textContent = 'Guest';
-          saveUIState({ lastUid: null });
-          const guestData = loadLocal(null);
-          state = guestData || { userName: 'Student', initialBacklogs: 0, dailyEntries: [], setupComplete: false };
-          applyUI();
-          refreshAll();
-          if (!state.setupComplete) showSetup(); else showDashboard();
-        }
-      });
-    }
-
-    function toggleAuthView(show) { showAuth(!!show); }
-
-    btnLogin.onclick = async () => {
-      const email = loginEmail.value.trim(), pass = loginPassword.value;
-      if (!email || !pass) { toast('Enter email and password'); return; }
-      try { await auth.signInWithEmailAndPassword(email, pass); toast('Logged in'); showAuth(false); }
-      catch (e) { toast(e.message || 'Login failed'); }
-    };
-
-    btnSignup.onclick = async () => {
-      const name = signupName.value.trim(), email = signupEmail.value.trim(), pass = signupPassword.value;
-      if (!email || !pass) { toast('Enter email and password'); return; }
-      if (pass.length < 6) { toast('Password must be at least 6 characters'); return; }
-      try {
-        const cred = await auth.createUserWithEmailAndPassword(email, pass);
-        state.userName = name || state.userName || email.split('@')[0];
-        state.updatedAt = new Date().toISOString();
-        currentUid = cred.user.uid;
-        saveUIState({ lastUid: currentUid });
-        await pushRemote(currentUid);
-        toast('Account created & data migrated!');
-        showAuth(false);
-        applyUI();
-        refreshAll();
-        if (!state.setupComplete) showSetup();
-      } catch (e) { toast(e.message || 'Signup failed'); }
-    };
-
-    btnSendReset.onclick = async () => {
-      const email = resetEmail.value.trim();
-      if (!email) { toast('Enter email'); return; }
-      try { await auth.sendPasswordResetEmail(email); toast('Reset link sent'); }
-      catch (e) { toast(e.message || 'Failed to send'); }
-    };
-
-    actLogout.onclick = async () => {
-      try { await auth.signOut(); toast('Logged out'); showAuth(false); }
-      catch { toast('Logout failed'); }
-    };
-
-    setupName.addEventListener('input', () => namePreview.textContent = setupName.value || '—');
-    setupInitial.addEventListener('input', () => initialPreview.textContent = +setupInitial.value || 0);
-    btnStart.onclick = async () => {
-      const init = Math.max(0, +setupInitial.value || 0);
-      const nm = setupName.value.trim();
-      const email = auth.currentUser?.email;
-      state.userName = nm || state.userName || (email ? email.split('@')[0] : 'Student');
-      state.initialBacklogs = init;
-      state.setupComplete = true;
-      state.dailyEntries = [];
-      state.totalCompleted = 0;
-      await pushRemote(currentUid);
-      refreshAll();
-      showDashboard();
-      toast('Setup complete');
-      saveUIState({ lastView: 'dashboard' });
-    };
-
-    btnToday.onclick = () => { setToday(); };
-    btnSave.onclick = async () => {
-      const date = logDate.value;
-      const completed = Math.max(0, +logCompleted.value || 0);
-      const added = Math.max(0, +logNew.value || 0);
-      if (!date) { toast('Pick a date'); return; }
-      const idx = state.dailyEntries.findIndex(e => e.date === date);
-      const entry = { date, completed, newLectures: added, ts: new Date().toISOString() };
-      if (idx >= 0) state.dailyEntries[idx] = entry;
-      else state.dailyEntries.push(entry);
-      sortEntries();
-      refreshAll();
-      await pushRemote(currentUid);
-      logCompleted.value = ''; logNew.value = '';
-      toast('Saved');
-    };
-
-    // History modal
-    actHistory.onclick = () => {
-      if (!state.dailyEntries?.length) { toast('No history yet'); closeSidebar(); return; }
-      historyList.innerHTML = '';
-      [...state.dailyEntries].reverse().forEach(e => {
-        const row = document.createElement('div');
-        row.className = 'surface';
-        row.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
-            <div><strong style="font-size:12px;">${safeString(e.date)}</strong><div class="muted" style="font-size:10px;">${new Date(e.ts).toLocaleString()}</div></div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <div class="surface" style="display:flex;gap:4px;align-items:center;padding:6px 8px;"><span>✅</span><strong>${safeNumber(e.completed)}</strong></div>
-                <div class="surface" style="display:flex;gap:4px;align-items:center;padding:6px 8px;"><span>➕</span><strong>${safeNumber(e.newLectures)}</strong></div>
-            </div>
-        </div>`;
-        historyList.appendChild(row);
-      });
-      historyModal.classList.remove('hidden');
-      closeSidebar();
-    };
-    closeHistory.onclick = () => historyModal.classList.add('hidden');
-
-    // PDF Export functionality
-    actPdfExport.onclick = () => {
-      pdfExportModal.classList.remove('hidden');
-      closeSidebar();
-      initializePdfDates();
-    };
-
-    closePdfExport.onclick = () => pdfExportModal.classList.add('hidden');
-
-    function initializePdfDates() {
-      const today = new Date().toISOString().slice(0, 10);
-      pdfEndDate.value = today;
-
-      if (state.dailyEntries?.length > 0) {
-        const sortedEntries = [...state.dailyEntries].sort((a, b) => a.date.localeCompare(b.date));
-        pdfStartDate.value = sortedEntries[0].date;
-      } else {
-        pdfStartDate.value = today;
-      }
-
-      btnAllTime.click();
-    }
-
-    btnAllTime.onclick = () => {
-      customDateRange.classList.add('hidden');
-      [btnAllTime, btnLast30, btnCustomRange].forEach(b => b.classList.remove('btn-primary'));
-      [btnAllTime, btnLast30, btnCustomRange].forEach(b => b.classList.add('btn-ghost'));
-      btnAllTime.classList.remove('btn-ghost');
-      btnAllTime.classList.add('btn-primary');
-
-      if (state.dailyEntries?.length > 0) {
-        const sortedEntries = [...state.dailyEntries].sort((a, b) => a.date.localeCompare(b.date));
-        const startDate = sortedEntries[0].date;
-        const endDate = new Date().toISOString().slice(0, 10);
-        updatePdfSummary(startDate, endDate);
-      } else {
-        const today = new Date().toISOString().slice(0, 10);
-        updatePdfSummary(today, today);
-      }
-    };
-
-    btnLast30.onclick = () => {
-      customDateRange.classList.add('hidden');
-      [btnAllTime, btnLast30, btnCustomRange].forEach(b => b.classList.remove('btn-primary'));
-      [btnAllTime, btnLast30, btnCustomRange].forEach(b => b.classList.add('btn-ghost'));
-      btnLast30.classList.remove('btn-ghost');
-      btnLast30.classList.add('btn-primary');
-
-      const endDate = new Date().toISOString().slice(0, 10);
-      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-      updatePdfSummary(startDate, endDate);
-    };
-
-    btnCustomRange.onclick = () => {
-      customDateRange.classList.remove('hidden');
-      [btnAllTime, btnLast30, btnCustomRange].forEach(b => b.classList.remove('btn-primary'));
-      [btnAllTime, btnLast30, btnCustomRange].forEach(b => b.classList.add('btn-ghost'));
-      btnCustomRange.classList.remove('btn-ghost');
-      btnCustomRange.classList.add('btn-primary');
-      updatePdfSummaryFromInputs();
-    };
-
-    [pdfStartDate, pdfEndDate].forEach(input => {
-      input.addEventListener('change', updatePdfSummaryFromInputs);
-    });
-
-    function updatePdfSummaryFromInputs() {
-      const startDate = pdfStartDate.value;
-      const endDate = pdfEndDate.value;
-      if (startDate && endDate) updatePdfSummary(startDate, endDate);
-    }
-
-    function updatePdfSummary(startDate, endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-
-      if (start > end) {
-        toast('Start date must be before end date');
-        btnGeneratePdf.disabled = true;
-        pdfSummary.style.display = 'none';
+      if (!file.type.startsWith('image/')) {
+        toast('Please select an image file', 'error');
         return;
       }
 
-      const totalDays = Math.floor((end - start) / (24 * 60 * 60 * 1000)) + 1;
-      const entriesInRange = (state.dailyEntries || []).filter(e => e.date >= startDate && e.date <= endDate);
-      const totalCompleted = entriesInRange.reduce((sum, e) => sum + safeNumber(e.completed), 0);
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        cropperImage.src = e.target.result;
+        cropperContainer.classList.remove('hidden');
+        saveProfilePictureBtn.classList.remove('hidden');
 
-      summaryDateRange.textContent = `${formatDate(startDate)} → ${formatDate(endDate)}`;
-      summaryTotalDays.textContent = totalDays;
-      summaryReportDays.textContent = entriesInRange.length;
-      summaryTotalCompleted.textContent = totalCompleted;
+        // Destroy existing cropper if any
+        if (cropper) {
+          cropper.destroy();
+        }
 
-      pdfSummary.style.display = 'block';
-      btnGeneratePdf.disabled = false;
+        // Initialize cropper
+        cropper = new Cropper(cropperImage, {
+          aspectRatio: 1,
+          viewMode: 1,
+          guides: false,
+          center: false,
+          highlight: false,
+          cropBoxMovable: true,
+          cropBoxResizable: true,
+          toggleDragModeOnDblclick: false,
+        });
+      };
+      reader.readAsDataURL(file);
     }
 
-    function formatDate(dateStr) {
-      return new Date(dateStr).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'short', day: 'numeric'
+    function saveProfilePicture() {
+      if (!cropper) return;
+
+      const canvas = cropper.getCroppedCanvas({
+        width: 200,
+        height: 200,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
       });
-    }
 
-    function generateDateRange(startDate, endDate) {
-      const dates = [];
-      const current = new Date(startDate);
-      const end = new Date(endDate);
+      const croppedImage = canvas.toDataURL('image/jpeg', 0.8);
+      appData.profilePicture = croppedImage;
+      appData.updatedAt = new Date().toISOString();
 
-      while (current <= end) {
-        dates.push(current.toISOString().slice(0, 10));
-        current.setDate(current.getDate() + 1);
+      // Update UI
+      updateUserAvatar();
+      
+      // Hide cropper
+      cropperContainer.classList.add('hidden');
+      saveProfilePictureBtn.classList.add('hidden');
+      profilePictureInput.value = '';
+
+      // Destroy cropper
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
       }
-      return dates;
+
+      // Save data
+      saveLocalData();
+      if (currentUser) {
+        syncToFirestore();
+      }
+
+      toast('Profile picture updated successfully!');
     }
 
-    btnGeneratePdf.onclick = async () => {
-      let startDate, endDate;
+    // UI Management
+    function updateAuthUI() {
+      if (currentUser) {
+        // User is logged in
+        loginButton.classList.add('hidden');
+        userInfo.classList.remove('hidden');
+        navActions.style.display = 'block';
+        navProfileSection.style.display = 'block';
 
-      if (btnAllTime.classList.contains('btn-primary')) {
-        if (state.dailyEntries?.length > 0) {
-          const sortedEntries = [...state.dailyEntries].sort((a, b) => a.date.localeCompare(b.date));
-          startDate = sortedEntries[0].date;
-          endDate = new Date().toISOString().slice(0, 10);
-        } else {
-          const today = new Date().toISOString().slice(0, 10);
-          startDate = endDate = today;
-        }
-      } else if (btnLast30.classList.contains('btn-primary')) {
-        endDate = new Date().toISOString().slice(0, 10);
-        startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const displayName = getUserDisplayName();
+        welcomeMessage.textContent = `Welcome back, ${displayName}!`;
+        updateUserAvatar();
+        updateProfileModal();
       } else {
-        startDate = pdfStartDate.value;
-        endDate = pdfEndDate.value;
-        if (!startDate || !endDate) {
-          toast('Please select both start and end dates');
-          return;
-        }
+        // User is guest
+        loginButton.classList.remove('hidden');
+        userInfo.classList.add('hidden');
+        navActions.style.display = 'block';
+        navProfileSection.style.display = 'none';
+
+        welcomeMessage.textContent = 'Welcome! Track your lecture progress with precision.';
+        updateUserAvatar();
+        updateProfileModal();
+      }
+    }
+
+    function toggleSidebar() {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('active');
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('active');
+    }
+
+    function showAuthModal() {
+      authModal.classList.add('active');
+    }
+
+    function closeAuthModal() {
+      authModal.classList.remove('active');
+    }
+
+    function showProfileModal() {
+      updateProfileModal();
+      profileModal.classList.add('active');
+      closeSidebar(); // Close sidebar on mobile when opening profile
+    }
+
+    function closeProfileModal() {
+      profileModal.classList.remove('active');
+      
+      // Clean up cropper
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
+      }
+      cropperContainer.classList.add('hidden');
+      saveProfilePictureBtn.classList.add('hidden');
+      profilePictureInput.value = '';
+    }
+
+    function showSetupModal() {
+      setupModal.classList.add('active');
+    }
+
+    function closeSetupModal() {
+      setupModal.classList.remove('active');
+    }
+
+    function handleAuthTabClick(e) {
+      if (!e.target.classList.contains('tab')) return;
+
+      // Update tab states
+      authTabs.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      e.target.classList.add('active');
+
+      // Show corresponding content
+      const tabName = e.target.dataset.tab;
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+      document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+    }
+
+    // Authentication functions
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      if (!email || !password) {
+        toast('Please enter both email and password', 'error');
+        return;
       }
 
-      // Show loading
-      pdfBtnText.textContent = 'Generating...';
-      pdfLoader.classList.remove('hidden');
-      btnGeneratePdf.disabled = true;
+      const loadingElement = document.getElementById('login-loading');
+      const textElement = document.getElementById('login-text');
+
+      loadingElement.classList.remove('hidden');
+      textElement.textContent = 'Signing in...';
 
       try {
-        await generatePdfReport(startDate, endDate);
-        toast('PDF downloaded successfully!');
+        await auth.signInWithEmailAndPassword(email, password);
+        toast('Successfully signed in!');
+        closeAuthModal();
       } catch (error) {
-        console.error('PDF generation failed:', error);
-        toast('Failed to generate PDF. Please try again.');
+        toast(error.message, 'error');
       } finally {
-        pdfBtnText.textContent = 'Generate PDF';
-        pdfLoader.classList.add('hidden');
-        btnGeneratePdf.disabled = false;
-        pdfExportModal.classList.add('hidden');
+        loadingElement.classList.add('hidden');
+        textElement.textContent = 'Sign In';
       }
-    };
-
-    async function generatePdfReport(startDate, endDate) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 15;
-      let yPos = margin;
-
-      // Header
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Lecture Backlog Progress Report', pageWidth / 2, yPos, { align: 'center' });
-      yPos += 12;
-
-      // User info and date range
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      const userName = safeString(state.userName) || 'Student';
-      const currentDate = new Date().toLocaleDateString('en-US', {
-        year: 'numeric', month: 'long', day: 'numeric'
-      });
-
-      doc.text(`Student: ${userName}`, margin, yPos);
-      doc.text(`Generated: ${currentDate}`, pageWidth - margin, yPos, { align: 'right' });
-      yPos += 8;
-
-      doc.text(`Date Range: ${formatDate(startDate)} to ${formatDate(endDate)}`, margin, yPos);
-      yPos += 15;
-
-      // Summary statistics
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Summary Statistics', margin, yPos);
-      yPos += 10;
-
-      const totalDays = Math.floor((new Date(endDate) - new Date(startDate)) / (24 * 60 * 60 * 1000)) + 1;
-      const entriesInRange = (state.dailyEntries || []).filter(e => e.date >= startDate && e.date <= endDate);
-      const totalCompleted = entriesInRange.reduce((sum, e) => sum + safeNumber(e.completed), 0);
-      const totalNewLectures = entriesInRange.reduce((sum, e) => sum + safeNumber(e.newLectures), 0);
-      const activeDays = entriesInRange.length;
-      const avgPerDay = activeDays > 0 ? (totalCompleted / activeDays).toFixed(1) : '0';
-
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-
-      const summaryStats = [
-        ['Total Days in Range:', String(totalDays)],
-        ['Days with Reports:', String(activeDays)],
-        ['Days without Reports:', String(totalDays - activeDays)],
-        ['Total Lectures Completed:', String(totalCompleted)],
-        ['Total New Lectures Added:', String(totalNewLectures)],
-        ['Average per Active Day:', String(avgPerDay)],
-        ['Initial Backlog:', String(safeNumber(state.initialBacklogs))]
-      ];
-
-      summaryStats.forEach((row) => {
-        doc.text(safeString(row[0]), margin, yPos);
-        doc.text(safeString(row[1]), margin + 80, yPos);
-        yPos += 6;
-      });
-
-      yPos += 10;
-
-      // Detailed daily records
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Daily Progress Records', margin, yPos);
-      yPos += 10;
-
-      // Create complete date range
-      const allDates = generateDateRange(startDate, endDate);
-      const entriesMap = {};
-      (state.dailyEntries || []).forEach(entry => {
-        if (entry && entry.date) entriesMap[entry.date] = entry;
-      });
-
-      // Table data
-      const tableData = allDates.map(date => {
-        const entry = entriesMap[date];
-        const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'short' });
-        const formattedDate = new Date(date).toLocaleDateString('en-US', {
-          month: 'short', day: 'numeric'
-        });
-
-        if (entry) {
-          return [
-            safeString(formattedDate),
-            safeString(dayName),
-            safeString(safeNumber(entry.completed)),
-            safeString(safeNumber(entry.newLectures)),
-            'Reported'
-          ];
-        } else {
-          return [
-            safeString(formattedDate),
-            safeString(dayName),
-            '—',
-            '—',
-            'No Report'
-          ];
-        }
-      });
-
-      // Generate table
-      doc.autoTable({
-        startY: yPos,
-        head: [['Date', 'Day', 'Lectures Completed', 'New Lectures Added', 'Status']],
-        body: tableData,
-        styles: {
-          fontSize: 8,
-          cellPadding: 2,
-          halign: 'center'
-        },
-        headStyles: {
-          fillColor: [108, 111, 245],
-          textColor: 255,
-          fontStyle: 'bold'
-        },
-        alternateRowStyles: {
-          fillColor: [248, 249, 250]
-        },
-        columnStyles: {
-          0: { cellWidth: 20 },
-          1: { cellWidth: 20 },
-          2: { cellWidth: 30 },
-          3: { cellWidth: 30 },
-          4: { cellWidth: 25 }
-        },
-        didParseCell: function (data) {
-          if (data.row.index >= 0 && data.column.index === 4) {
-            const cellText = safeString(data.cell.text[0]);
-            if (cellText === 'No Report') {
-              data.cell.styles.textColor = [255, 92, 122];
-              data.cell.styles.fontStyle = 'italic';
-            } else {
-              data.cell.styles.textColor = [16, 215, 163];
-              data.cell.styles.fontStyle = 'bold';
-            }
-          }
-        }
-      });
-
-      // Footer
-      const finalY = doc.lastAutoTable.finalY + 15;
-      if (finalY < doc.internal.pageSize.getHeight() - 30) {
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(128, 128, 128);
-        doc.text('Generated by Lecture Backlog Tracker', pageWidth / 2, doc.internal.pageSize.getHeight() - 15, { align: 'center' });
-      }
-
-      // Save PDF
-      const fileName = `lecture-backlog-report-${startDate}-to-${endDate}.pdf`;
-      doc.save(fileName);
     }
 
-    actExport.onclick = () => {
-      const data = { ...state, exportedAt: new Date().toISOString() };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `lecture-backlog-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      closeSidebar();
-      toast('JSON exported');
-    };
+    async function handleSignup() {
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
 
-    actImport.onclick = () => {
-      const inp = document.createElement('input');
-      inp.type = 'file';
-      inp.accept = 'application/json';
-      inp.onchange = async () => {
-        const file = inp.files ? inp.files[0] : null;
-        if (!file) return;
-        try {
-          const text = await file.text();
-          const obj = JSON.parse(text);
-          if (!('initialBacklogs' in obj) || !Array.isArray(obj.dailyEntries)) { toast('Invalid file structure'); return; }
-          state = {
-            userName: safeString(obj.userName) || state.userName,
-            initialBacklogs: safeNumber(obj.initialBacklogs),
-            dailyEntries: Array.isArray(obj.dailyEntries) ? obj.dailyEntries : [],
-            totalCompleted: safeNumber(obj.totalCompleted),
-            setupComplete: !!obj.setupComplete,
-            updatedAt: new Date().toISOString()
-          };
-          refreshAll();
-          await pushRemote(currentUid);
-          applyUI();
-          toast('Imported successfully');
-        } catch { toast('Import failed. Could not read file.'); }
+      if (!email || !password) {
+        toast('Please enter both email and password', 'error');
+        return;
+      }
+
+      if (password.length < 6) {
+        toast('Password must be at least 6 characters', 'error');
+        return;
+      }
+
+      const loadingElement = document.getElementById('signup-loading');
+      const textElement = document.getElementById('signup-text');
+
+      loadingElement.classList.remove('hidden');
+      textElement.textContent = 'Creating account...';
+
+      try {
+        const result = await auth.createUserWithEmailAndPassword(email, password);
+
+        // Update app data with user name
+        if (name) {
+          appData.userName = name;
+          appData.updatedAt = new Date().toISOString();
+        }
+
+        toast('Account created successfully!');
+        closeAuthModal();
+
+        if (!appData.setupComplete) {
+          showSetupModal();
+        }
+      } catch (error) {
+        toast(error.message, 'error');
+      } finally {
+        loadingElement.classList.add('hidden');
+        textElement.textContent = 'Create Account';
+      }
+    }
+
+    async function handlePasswordReset() {
+      const email = document.getElementById('reset-email').value.trim();
+
+      if (!email) {
+        toast('Please enter your email address', 'error');
+        return;
+      }
+
+      const loadingElement = document.getElementById('reset-loading');
+      const textElement = document.getElementById('reset-text');
+
+      loadingElement.classList.remove('hidden');
+      textElement.textContent = 'Sending...';
+
+      try {
+        await auth.sendPasswordResetEmail(email);
+        toast('Password reset email sent! Check your inbox.');
+        closeAuthModal();
+      } catch (error) {
+        toast(error.message, 'error');
+      } finally {
+        loadingElement.classList.add('hidden');
+        textElement.textContent = 'Send Reset Link';
+      }
+    }
+
+    async function logout() {
+      try {
+        await auth.signOut();
+        closeProfileModal();
+        toast('Successfully logged out');
+      } catch (error) {
+        toast('Error logging out', 'error');
+      }
+    }
+
+    async function completeSetup() {
+      const name = setupName.value.trim();
+      const initialCount = parseInt(setupInitial.value) || 0;
+
+      appData.userName = name || appData.userName || 'Student';
+      appData.initialBacklogs = initialCount;
+      appData.setupComplete = true;
+      appData.updatedAt = new Date().toISOString();
+
+      saveLocalData();
+
+      if (currentUser) {
+        await syncToFirestore();
+      }
+
+      updateUI();
+      closeSetupModal();
+      toast('Setup completed successfully!');
+    }
+
+    function saveEntry() {
+      const date = logDate.value;
+      const completed = parseInt(lecturesCompleted.value) || 0;
+      const newLecs = parseInt(newLectures.value) || 0;
+
+      if (!date) {
+        toast('Please select a date', 'error');
+        return;
+      }
+
+      // Find existing entry or create new one
+      const existingIndex = appData.dailyEntries.findIndex(entry => entry.date === date);
+      const entry = {
+        date,
+        completed,
+        newLectures: newLecs,
+        timestamp: new Date().toISOString()
       };
-      inp.click();
-      closeSidebar();
-    };
 
-    actReset.onclick = async () => {
-      if (!confirm('Reset all data? This cannot be undone.')) return;
-      const email = auth.currentUser?.email;
-      state = { userName: email ? email.split('@')[0] : 'Student', initialBacklogs: 0, dailyEntries: [], totalCompleted: 0, setupComplete: false, updatedAt: new Date().toISOString() };
-      await pushRemote(currentUid);
-      refreshAll();
-      showSetup();
-      closeSidebar();
-      toast('Reset complete');
-      saveUIState({ lastView: 'setup' });
-    };
+      if (existingIndex >= 0) {
+        appData.dailyEntries[existingIndex] = entry;
+      } else {
+        appData.dailyEntries.push(entry);
+      }
 
-    [loginEmail, loginPassword].forEach(el => el.addEventListener('keydown', e => { if (e.key === 'Enter') btnLogin.click(); }));
-    [signupName, signupEmail, signupPassword].forEach(el => el.addEventListener('keydown', e => { if (e.key === 'Enter') btnSignup.click(); }));
+      // Sort entries by date
+      appData.dailyEntries.sort((a, b) => a.date.localeCompare(b.date));
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const uis = loadUIState();
-      if (isMobile()) closeSidebar();
-      else if (uis.sidebarOpen) sidebar.classList.add('open');
-      instantResume();
-    });
+      // Update total completed
+      appData.totalCompleted = appData.dailyEntries.reduce((sum, entry) => sum + entry.completed, 0);
+      appData.updatedAt = new Date().toISOString();
 
-    const observer = new MutationObserver(() => {
-      if (!authView.classList.contains('hidden')) saveUIState({ lastView: 'account' });
-      else if (!setupView.classList.contains('hidden')) saveUIState({ lastView: 'setup' });
-      else if (!dashboard.classList.contains('hidden')) saveUIState({ lastView: 'dashboard' });
-    });
-    observer.observe(document.querySelector('main'), { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+      // Save and update UI
+      saveLocalData();
+      if (currentUser) {
+        syncToFirestore();
+      }
+      updateUI();
+
+      // Clear form
+      lecturesCompleted.value = '';
+      newLectures.value = '';
+
+      toast('Entry saved successfully!');
+    }
+
+    function updateUI() {
+      updateStats();
+      updateProgress();
+      renderWeeklyChart();
+      updateAuthUI();
+    }
+
+    function updateStats() {
+      const totalNewLectures = appData.dailyEntries.reduce((sum, entry) => sum + safeNumber(entry.newLectures), 0);
+      const totalBacklogs = safeNumber(appData.initialBacklogs) + totalNewLectures;
+      const completed = appData.dailyEntries.reduce((sum, entry) => sum + safeNumber(entry.completed), 0);
+      const remaining = Math.max(0, totalBacklogs - completed);
+      const average = appData.dailyEntries.length > 0 ? (completed / appData.dailyEntries.length).toFixed(1) : '0.0';
+
+      document.getElementById('stat-total').textContent = totalBacklogs;
+      document.getElementById('stat-completed').textContent = completed;
+      document.getElementById('stat-remaining').textContent = remaining;
+      document.getElementById('stat-average').textContent = average;
+    }
+
+    function updateProgress() {
+      const totalNewLectures = appData.dailyEntries.reduce((sum, entry) => sum + safeNumber(entry.newLectures), 0);
+      const totalBacklogs = safeNumber(appData.initialBacklogs) + totalNewLectures;
+      const completed = appData.dailyEntries.reduce((sum, entry) => sum + safeNumber(entry.completed), 0);
+      const percentage = totalBacklogs > 0 ? Math.round((completed / totalBacklogs) * 100) : 0;
+
+      document.getElementById('progress-percentage').textContent = `${percentage}%`;
+      document.getElementById('progress-fill').style.width = `${percentage}%`;
+      document.getElementById('circular-progress-text').textContent = `${percentage}%`;
+
+      // Update circular progress
+      const circumference = 2 * Math.PI * 70;
+      const offset = circumference - (percentage / 100) * circumference;
+      document.getElementById('circular-progress').style.strokeDashoffset = offset;
+    }
+
+    function renderWeeklyChart() {
+      const chart = document.getElementById('weekly-chart');
+      const bars = chart.querySelectorAll('.chart-bar');
+      bars.forEach(bar => bar.remove());
+
+      const lastWeek = appData.dailyEntries.slice(-7);
+      if (lastWeek.length === 0) return;
+
+      const maxValue = Math.max(...lastWeek.map(entry => safeNumber(entry.completed)), 1);
+      const chartWidth = chart.offsetWidth;
+      const barWidth = Math.max(20, (chartWidth - 60) / lastWeek.length);
+
+      lastWeek.forEach((entry, index) => {
+        const bar = document.createElement('div');
+        bar.className = 'chart-bar';
+        bar.style.left = `${30 + index * (barWidth + 10)}px`;
+        bar.style.width = `${barWidth}px`;
+        bar.style.height = `${(safeNumber(entry.completed) / maxValue) * 140}px`;
+        bar.title = `${entry.date}: ${entry.completed} lectures`;
+        chart.appendChild(bar);
+      });
+
+      const range = lastWeek.length > 0 ?
+        `${lastWeek[0].date} → ${lastWeek[lastWeek.length - 1].date}` :
+        'No data';
+      document.getElementById('chart-range').textContent = range;
+    }
+
+    function loadLocalData() {
+      const stored = localStorage.getItem(getStorageKey());
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          appData = { ...appData, ...parsed };
+        } catch (e) {
+          console.error('Error parsing stored data:', e);
+        }
+      }
+    }
+
+    function saveLocalData() {
+      localStorage.setItem(getStorageKey(), JSON.stringify(appData));
+    }
+
+    async function syncToFirestore() {
+      if (!currentUser) return;
+
+      try {
+        const docRef = db.collection('lectureBacklogs').doc(currentUser.uid);
+        await docRef.set(appData, { merge: true });
+      } catch (error) {
+        console.error('Error syncing to Firestore:', error);
+      }
+    }
+
+    async function loadFromFirestore() {
+      if (!currentUser) return;
+
+      try {
+        const docRef = db.collection('lectureBacklogs').doc(currentUser.uid);
+        const doc = await docRef.get();
+
+        if (doc.exists) {
+          const remoteData = doc.data();
+          // Simple merge strategy: use remote if it's newer
+          if (remoteData.updatedAt && (!appData.updatedAt || new Date(remoteData.updatedAt) > new Date(appData.updatedAt))) {
+            // Merge guest data with remote data if user just signed in
+            if (!currentUser && appData.dailyEntries.length > 0) {
+              // If guest has data, merge it
+              const guestEntries = appData.dailyEntries;
+              appData = { ...appData, ...remoteData };
+
+              // Merge daily entries
+              const entryMap = new Map();
+              [...remoteData.dailyEntries, ...guestEntries].forEach(entry => {
+                entryMap.set(entry.date, entry);
+              });
+              appData.dailyEntries = Array.from(entryMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+
+              // Update totals
+              appData.totalCompleted = appData.dailyEntries.reduce((sum, entry) => sum + safeNumber(entry.completed), 0);
+              appData.updatedAt = new Date().toISOString();
+
+              // Save merged data
+              await syncToFirestore();
+            } else {
+              appData = { ...appData, ...remoteData };
+            }
+            saveLocalData();
+            updateUI();
+          } else {
+            // Push local data to remote
+            await syncToFirestore();
+          }
+        } else {
+          // First time user, push local data
+          await syncToFirestore();
+        }
+      } catch (error) {
+        console.error('Error loading from Firestore:', error);
+      }
+    }
+
+    function handleAuthStateChange(user) {
+      const wasGuest = !currentUser;
+      currentUser = user;
+
+      updateAuthUI();
+
+      if (user) {
+        // User signed in
+        if (wasGuest) {
+          // Just signed in, merge local guest data
+          loadFromFirestore();
+        } else {
+          // Already signed in, just sync
+          syncToFirestore();
+        }
+      } else {
+        // User signed out or is guest
+        // Clear profile picture on logout
+        appData.profilePicture = null;
+        loadLocalData();
+        updateUI();
+      }
+    }
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', initializeApp);
   </script>
 </body>
 
